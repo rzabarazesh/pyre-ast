@@ -12,7 +12,7 @@
    build system. */
 #undef AIX_BUILDDATE
 
-/* Define for AIX if your compiler is a genuine IBM xlC/xlC_r and you want
+/* Define for AIX if your compiler is a genuine IBM xlC/xlC_r and you want
    support for AIX C++ shared extension modules. */
 #undef AIX_GENUINE_CPLUSPLUS
 
@@ -29,15 +29,15 @@
 /* The Android API level. */
 #undef ANDROID_API_LEVEL
 
-/* Define if C doubles are 64-bit IEEE 754 binary format, stored in ARM
+/* Define if C doubles are 64-bit IEEE 754 binary format, stored in ARM
    mixed-endian order (byte order 45670123) */
 #undef DOUBLE_IS_ARM_MIXED_ENDIAN_IEEE754
 
-/* Define if C doubles are 64-bit IEEE 754 binary format, stored with the most
-   significant byte first */
+/* Define if C doubles are 64-bit IEEE 754 binary format, stored with the
+   most significant byte first */
 #undef DOUBLE_IS_BIG_ENDIAN_IEEE754
 
-/* Define if C doubles are 64-bit IEEE 754 binary format, stored with the
+/* Define if C doubles are 64-bit IEEE 754 binary format, stored with the
    least significant byte first */
 #undef DOUBLE_IS_LITTLE_ENDIAN_IEEE754
 
@@ -96,7 +96,7 @@
 /* Define to 1 if you have the <bluetooth.h> header file. */
 #undef HAVE_BLUETOOTH_H
 
-/* Define if mbstowcs(NULL, "text", 0) does not return the number of wide
+/* Define if mbstowcs(NULL, "text", 0) does not return the number of wide
    chars that would be converted. */
 #undef HAVE_BROKEN_MBSTOWCS
 
@@ -115,7 +115,7 @@
 /* Define if pthread_sigmask() does not work on your system. */
 #undef HAVE_BROKEN_PTHREAD_SIGMASK
 
-/* define to 1 if your sem_getvalue is broken. */
+/* define to 1 if your sem_getvalue is broken. */
 #undef HAVE_BROKEN_SEM_GETVALUE
 
 /* Define if 'unsetenv' does not return an int. */
@@ -495,7 +495,7 @@
 /* Define this if you have the 6-arg version of gethostbyname_r(). */
 #undef HAVE_GETHOSTBYNAME_R_6_ARG
 
-/* Define to 1 if you have the `gethostname' function. */
+/* Define if you have the 'gethostname' function. */
 #undef HAVE_GETHOSTNAME
 
 /* Define to 1 if you have the `getitimer' function. */
@@ -585,7 +585,7 @@
 /* Define to 1 if you have the `getwd' function. */
 #undef HAVE_GETWD
 
-/* Define if glibc has incorrect _FORTIFY_SOURCE wrappers for memmove and
+/* Define if glibc has incorrect _FORTIFY_SOURCE wrappers for memmove and
    bcopy. */
 #undef HAVE_GLIBC_MEMMOVE_BUG
 
@@ -638,8 +638,8 @@
 #undef HAVE_LANGINFO_H
 
 /* Defined to enable large file support when an off_t is bigger than a long
-   and long long is at least as big as an off_t. You may need to add some
-   flags for configuration and compilation to enable this mode. (For Solaris
+   and long long is at least as big as an off_t. You may need to add some
+   flags for configuration and compilation to enable this mode. (For Solaris
    and Linux, the necessary defines are already defined.) */
 #undef HAVE_LARGEFILE_SUPPORT
 
@@ -844,7 +844,7 @@
 /* Define to 1 if you have the `nice' function. */
 #undef HAVE_NICE
 
-/* Define if the internal form of wchar_t in non-Unicode locales is not
+/* Define if the internal form of wchar_t in non-Unicode locales is not
    Unicode. */
 #undef HAVE_NON_UNICODE_WCHAR_T_REPRESENTATION
 
@@ -1097,7 +1097,7 @@
 /* Define to 1 if you have the `shm_unlink' function. */
 #undef HAVE_SHM_UNLINK
 
-/* Define to 1 if you have the `shutdown' function. */
+/* Define if you have the 'shutdown' function. */
 #undef HAVE_SHUTDOWN
 
 /* Define to 1 if you have the `sigaction' function. */
@@ -1169,7 +1169,7 @@
 /* Define if you have struct stat.st_mtimensec */
 #undef HAVE_STAT_TV_NSEC2
 
-/* Define if your compiler supports variable length function prototypes (e.g.
+/* Define if your compiler supports variable length function prototypes (e.g.
    void fprintf(FILE *, char *, ...);) *and* <stdarg.h> */
 #undef HAVE_STDARG_PROTOTYPES
 
@@ -1388,6 +1388,9 @@
 /* Define to 1 if you have the <term.h> header file. */
 #undef HAVE_TERM_H
 
+/* Define to 1 if you have the <thread.h> header file. */
+#undef HAVE_THREAD_H
+
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM
 
@@ -1429,8 +1432,8 @@
 /* Define to 1 if you have the `unlinkat' function. */
 #undef HAVE_UNLINKAT
 
-/* Define if you have a useable wchar_t type defined in wchar.h; useable means
-   wchar_t must be an unsigned type with at least 16 bits. (see
+/* Define if you have a useable wchar_t type defined in wchar.h; useable
+   means wchar_t must be an unsigned type with at least 16 bits. (see
    Include/unicodeobject.h). */
 #undef HAVE_USABLE_WCHAR_T
 
@@ -1504,6 +1507,9 @@
 /* Define to 1 if you have the `writev' function. */
 #undef HAVE_WRITEV
 
+/* Define to 1 if you have the <ws2tcpip.h> header file. */
+#undef HAVE_WS2TCPIP_H
+
 /* Define if the zlib library has inflateCopy */
 #undef HAVE_ZLIB_COPY
 
@@ -1545,7 +1551,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define if POSIX semaphores aren't enabled on your system */
+/* Define if POSIX semaphores aren't enabled on your system */
 #undef POSIX_SEMAPHORES_NOT_ENABLED
 
 /* Define if pthread_key_t is compatible with int. */
@@ -1557,7 +1563,7 @@
 /* Define as the preferred size in bits of long digits */
 #undef PYLONG_BITS_IN_DIGIT
 
-/* enabled builtin hash modules */
+/* enabled builtin hash modules */
 #undef PY_BUILTIN_HASHLIB_HASHES
 
 /* Define if you want to coerce the C locale to a UTF-8 based locale */
@@ -1566,17 +1572,18 @@
 /* Define to printf format modifier for Py_ssize_t */
 #undef PY_FORMAT_SIZE_T
 
-/* Define to 1 to build the sqlite module with loadable extensions support. */
+/* Define to 1 to build the sqlite module with loadable extensions support.
+   */
 #undef PY_SQLITE_ENABLE_LOAD_EXTENSION
 
-/* Define if SQLite was compiled with the serialize API */
+/* Define if SQLite was compiled with the serialize API */
 #undef PY_SQLITE_HAVE_SERIALIZE
 
-/* Default cipher suites list for ssl module. 1: Python's preferred selection,
-   2: leave OpenSSL defaults untouched, 0: custom string */
+/* Default cipher suites list for ssl module. 1: Python's preferred
+   selection, 2: leave OpenSSL defaults untouched, 0: custom string */
 #undef PY_SSL_DEFAULT_CIPHERS
 
-/* Cipher suite string for PY_SSL_DEFAULT_CIPHERS=0 */
+/* Cipher suite string for PY_SSL_DEFAULT_CIPHERS=0 */
 #undef PY_SSL_DEFAULT_CIPHER_STRING
 
 /* PEP 11 Support tier (1, 2, 3 or 0 for unsupported) */
@@ -1588,7 +1595,7 @@
 /* Defined if Python is built as a shared library. */
 #undef Py_ENABLE_SHARED
 
-/* Define hash algorithm for str, bytes and memoryview. SipHash24: 1, FNV: 2,
+/* Define hash algorithm for str, bytes and memoryview. SipHash24: 1, FNV: 2,
    SipHash13: 3, externally defined: 0 */
 #undef Py_HASH_ALGORITHM
 
@@ -1604,7 +1611,7 @@
 /* Define if setpgrp() must be called as setpgrp(0, 0). */
 #undef SETPGRP_HAVE_ARG
 
-/* Define if i>>j for signed int i does not extend the sign bit when i < 0 */
+/* Define if i>>j for signed int i does not extend the sign bit when i < 0 */
 #undef SIGNED_RIGHT_SHIFT_ZERO_FILLS
 
 /* The size of `double', as computed by sizeof. */
@@ -1718,9 +1725,9 @@
 /* Define if you want to compile in DTrace support */
 #undef WITH_DTRACE
 
-/* Define if you want to use the new-style (Openstep, Rhapsody, MacOS) dynamic
-   linker (dyld) instead of the old-style (NextStep) dynamic linker (rld).
-   Dyld is necessary to support frameworks. */
+/* Define if you want to use the new-style (Openstep, Rhapsody, MacOS)
+   dynamic linker (dyld) instead of the old-style (NextStep) dynamic linker
+   (rld). Dyld is necessary to support frameworks. */
 #undef WITH_DYLD
 
 /* Define to build the readline module against Editline. */
@@ -1732,7 +1739,7 @@
 /* Define to 1 if libintl is needed for locale functions. */
 #undef WITH_LIBINTL
 
-/* Define if you want to produce an OpenStep/Rhapsody framework (shared
+/* Define if you want to produce an OpenStep/Rhapsody framework (shared
    library plus accessory files). */
 #undef WITH_NEXT_FRAMEWORK
 
@@ -1791,7 +1798,7 @@
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
 
-/* Define if you have POSIX threads, and your system does not define that. */
+/* Define if you have POSIX threads, and your system does not define that. */
 #undef _POSIX_THREADS
 
 /* framework name */

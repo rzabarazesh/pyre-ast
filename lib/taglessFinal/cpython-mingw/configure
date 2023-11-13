@@ -644,6 +644,16 @@ MODULE__TESTCLINIC_FALSE
 MODULE__TESTCLINIC_TRUE
 MODULE__TESTCAPI_FALSE
 MODULE__TESTCAPI_TRUE
+MODULE__OVERLAPPED_FALSE
+MODULE__OVERLAPPED_TRUE
+MODULE_WINSOUND_FALSE
+MODULE_WINSOUND_TRUE
+MODULE__MSI_FALSE
+MODULE__MSI_TRUE
+MODULE__WINAPI_FALSE
+MODULE__WINAPI_TRUE
+MODULE_MSVCRT_FALSE
+MODULE_MSVCRT_TRUE
 MODULE__HASHLIB_FALSE
 MODULE__HASHLIB_TRUE
 MODULE__SSL_FALSE
@@ -702,6 +712,8 @@ MODULE__ELEMENTTREE_FALSE
 MODULE__ELEMENTTREE_TRUE
 MODULE_PYEXPAT_FALSE
 MODULE_PYEXPAT_TRUE
+MODULE__POSIXSUBPROCESS_FALSE
+MODULE__POSIXSUBPROCESS_TRUE
 MODULE_TERMIOS_FALSE
 MODULE_TERMIOS_TRUE
 MODULE_SYSLOG_FALSE
@@ -752,8 +764,6 @@ MODULE__RANDOM_FALSE
 MODULE__RANDOM_TRUE
 MODULE__QUEUE_FALSE
 MODULE__QUEUE_TRUE
-MODULE__POSIXSUBPROCESS_FALSE
-MODULE__POSIXSUBPROCESS_TRUE
 MODULE__PICKLE_FALSE
 MODULE__PICKLE_TRUE
 MODULE__OPCODE_FALSE
@@ -788,8 +798,12 @@ OPENSSL_LDFLAGS
 OPENSSL_LIBS
 OPENSSL_INCLUDES
 ENSUREPIP
+RCFLAGS
+AWK
 SRCDIRS
+PYTHON_OBJS_FROZENMAIN
 THREADHEADERS
+NCURSESW_INCLUDEDIR
 WHEEL_PKG_DIR
 LIBPL
 PY_ENABLE_SHARED
@@ -799,6 +813,7 @@ LIBPYTHON
 EXT_SUFFIX
 ALT_SOABI
 SOABI
+PYD_PLATFORM_TAG
 LIBC
 LIBM
 HAVE_GETHOSTBYNAME
@@ -825,6 +840,7 @@ DTRACE_OBJS
 DTRACE_HEADERS
 DFLAGS
 DTRACE
+USE_WIN32_MODULE
 GDBM_LIBS
 GDBM_CFLAGS
 X11_LIBS
@@ -885,6 +901,7 @@ INSTALL_PROGRAM
 ac_ct_READELF
 READELF
 ARFLAGS
+WINDRES
 ac_ct_AR
 AR
 LINK_PYTHON_OBJS
@@ -927,6 +944,11 @@ CFLAGS
 CC
 EXPORT_MACOSX_DEPLOYMENT_TARGET
 CONFIGURE_MACOSX_DEPLOYMENT_TARGET
+INITSYS
+abs_builddir_b2h
+abs_srcdir_b2h
+srcdir_b2h
+prefix_b2h
 _PYTHON_HOST_PLATFORM
 MACHDEP
 FRAMEWORKINSTALLAPPSPREFIX
@@ -991,7 +1013,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1034,6 +1055,7 @@ enable_pystats
 with_assertions
 enable_optimizations
 with_lto
+with_nt_threads
 with_address_sanitizer
 with_memory_sanitizer
 with_undefined_behavior_sanitizer
@@ -1142,7 +1164,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1395,15 +1416,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1541,7 +1553,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1694,7 +1706,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1729,13 +1740,13 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-universalsdk[=SDKDIR]
-                          create a universal binary build. SDKDIR specifies
-                          which macOS SDK should be used to perform the build,
-                          see Mac/README.rst. (default is no)
+                          create a universal binary build. SDKDIR specifies
+                          which macOS SDK should be used to perform the
+                          build, see Mac/README.rst. (default is no)
   --enable-framework[=INSTALLDIR]
                           create a Python.framework rather than a traditional
-                          Unix install. optional INSTALLDIR specifies the
-                          installation path. see Mac/README.rst (default is
+                          Unix install. optional INSTALLDIR specifies the
+                          installation path. see Mac/README.rst (default is
                           no)
   --enable-wasm-dynamic-linking
                           Enable dynamic linking support for WebAssembly
@@ -1750,8 +1761,8 @@ Optional Features:
   --enable-optimizations  enable expensive, stable optimizations (PGO, etc.)
                           (default is no)
   --enable-loadable-sqlite-extensions
-                          support loadable extensions in the sqlite3 module,
-                          see Doc/library/sqlite3.rst (default is no)
+                           support loadable extensions in the sqlite3 module,
+                          see Doc/library/sqlite3.rst (default is no)
   --enable-ipv6           enable ipv6 (with ipv4) support, see
                           Doc/library/socket.rst (default is yes if supported)
   --enable-big-digits[=15|30]
@@ -1770,15 +1781,15 @@ Optional Packages:
                           check)
   --with-universal-archs=ARCH
                           specify the kind of macOS universal binary that
-                          should be created. This option is only valid when
+                          should be created. This option is only valid when
                           --enable-universalsdk is set; options are:
                           ("universal2", "intel-64", "intel-32", "intel",
-                          "32-bit", "64-bit", "3-way", or "all") see
+                          "32-bit", "64-bit", "3-way", or "all") see
                           Mac/README.rst
   --with-framework-name=FRAMEWORK
                           specify the name for the python framework on macOS
                           only valid when --enable-framework is set. see
-                          Mac/README.rst (default is 'Python')
+                          Mac/README.rst (default is 'Python')
   --with-cxx-main[=COMPILER]
                           compile main() and link Python executable with C++
                           compiler specified in COMPILER (default is $CXX)
@@ -1796,6 +1807,8 @@ Optional Packages:
   --with-lto=[full|thin|no|yes]
                           enable Link-Time-Optimization in any build (default
                           is no)
+  --with-nt-threads       build with windows threads (default is
+                          system-dependent)
   --with-address-sanitizer
                           enable AddressSanitizer memory error detector,
                           'asan' (default is no)
@@ -1830,7 +1843,7 @@ Optional Packages:
   --with-freelists        enable object freelists (default is yes)
   --with-c-locale-coercion
                           enable C locale coercion to a UTF-8 based locale
-                          (default is yes)
+                          (default is yes on Unix, no on Windows)
   --with-valgrind         enable Valgrind support (default is no)
   --with-dtrace           enable DTrace support (default is no)
   --with-libm=STRING      override libm math library to STRING (default is
@@ -1852,17 +1865,17 @@ Optional Packages:
   --with-openssl=DIR      root of the OpenSSL directory
   --with-openssl-rpath=[DIR|auto|no]
                           Set runtime library directory (rpath) for OpenSSL
-                          libraries, no (default): don't set rpath, auto:
+                          libraries, no (default): don't set rpath, auto:
                           auto-detect rpath from --with-openssl and
-                          pkg-config, DIR: set an explicit rpath
+                          pkg-config, DIR: set an explicit rpath
   --with-ssl-default-suites=[python|openssl|STRING]
-                          override default cipher suites string, python: use
-                          Python's preferred selection (default), openssl:
-                          leave OpenSSL's defaults untouched, STRING: use a
-                          custom string, python and STRING also set TLS 1.2 as
-                          minimum TLS version
+                          override default cipher suites string, python: use
+                          Python's preferred selection (default), openssl:
+                          leave OpenSSL's defaults untouched, STRING: use a
+                          custom string, python and STRING also set TLS 1.2
+                          as minimum TLS version
   --with-builtin-hashlib-hashes=md5,sha1,sha256,sha512,sha3,blake2
-                          builtin hash modules, md5, sha1, sha256, sha512,
+                          builtin hash modules, md5, sha1, sha256, sha512,
                           sha3 (with shake), blake2
 
 Some influential environment variables:
@@ -2300,7 +2313,7 @@ else
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 if (sizeof ($2))
 	 return 0;
@@ -2313,7 +2326,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 if (sizeof (($2)))
 	    return 0;
@@ -2351,7 +2364,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 static int test_array [1 - 2 * !(($2) >= 0)];
 test_array [0] = 0;
@@ -2368,7 +2381,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 static int test_array [1 - 2 * !(($2) <= $ac_mid)];
 test_array [0] = 0;
@@ -2395,7 +2408,7 @@ else
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 static int test_array [1 - 2 * !(($2) < 0)];
 test_array [0] = 0;
@@ -2412,7 +2425,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 static int test_array [1 - 2 * !(($2) >= $ac_mid)];
 test_array [0] = 0;
@@ -2447,7 +2460,7 @@ while test "x$ac_lo" != "x$ac_hi"; do
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 static int test_array [1 - 2 * !(($2) <= $ac_mid)];
 test_array [0] = 0;
@@ -2472,12 +2485,12 @@ esac
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
-static long int longval () { return $2; }
-static unsigned long int ulongval () { return $2; }
+static long int longval (void) { return $2; }
+static unsigned long int ulongval (void) { return $2; }
 #include <stdio.h>
 #include <stdlib.h>
 int
-main ()
+main (void)
 {
 
   FILE *f = fopen ("conftest.val", "w");
@@ -2538,7 +2551,7 @@ else
 #define $2 innocuous_$2
 
 /* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $2 (); below.
+    which can conflict with char $2 (void); below.
     Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
     <limits.h> exists even on freestanding compilers.  */
 
@@ -2556,7 +2569,7 @@ else
 #ifdef __cplusplus
 extern "C"
 #endif
-char $2 ();
+char $2 (void);
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
@@ -2565,7 +2578,7 @@ choke me
 #endif
 
 int
-main ()
+main (void)
 {
 return $2 ();
   ;
@@ -2605,7 +2618,7 @@ else
 /* end confdefs.h.  */
 $4
 int
-main ()
+main (void)
 {
 #ifndef $as_decl_name
 #ifdef __cplusplus
@@ -2649,7 +2662,7 @@ else
 /* end confdefs.h.  */
 $5
 int
-main ()
+main (void)
 {
 static $2 ac_aggr;
 if (ac_aggr.$3)
@@ -2665,7 +2678,7 @@ else
 /* end confdefs.h.  */
 $5
 int
-main ()
+main (void)
 {
 static $2 ac_aggr;
 if (sizeof ac_aggr.$3)
@@ -3310,6 +3323,7 @@ fi
 
 
 
+NATIVE_PYTHON_SEARCH_PATH_MINGW=`echo $host | grep -Eq 'mingw*' && echo "$MINGW_PREFIX/bin" || echo $PATH`
 for ac_prog in python$PACKAGE_VERSION python3.10 python3.9 python3.8 python3.7 python3.6 python3 python
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -3323,7 +3337,7 @@ else
   ac_cv_prog_PYTHON_FOR_REGEN="$PYTHON_FOR_REGEN" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
+for as_dir in $NATIVE_PYTHON_SEARCH_PATH_MINGW
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -3823,6 +3837,9 @@ then
 	*-*-cygwin*)
 		ac_sys_system=Cygwin
 		;;
+	*-*-mingw*)
+		ac_sys_system=MINGW
+		;;
 	*-*-vxworks*)
 	    ac_sys_system=VxWorks
 	    ;;
@@ -3858,6 +3875,7 @@ then
 	linux*) MACHDEP="linux";;
 	cygwin*) MACHDEP="cygwin";;
 	darwin*) MACHDEP="darwin";;
+	mingw*) MACHDEP="win32";;
 	'')	MACHDEP="unknown";;
     esac
 fi
@@ -3884,6 +3902,9 @@ if test "$cross_compiling" = yes; then
 		;;
 	wasm32-*-* | wasm64-*-*)
 		_host_cpu=$host_cpu
+    ;;
+	*-*-mingw*)
+		_host_cpu=
 		;;
 	*)
 		# for now, limit cross builds to known configurations
@@ -3891,6 +3912,14 @@ if test "$cross_compiling" = yes; then
 		as_fn_error $? "cross build not supported for $host" "$LINENO" 5
 	esac
 	_PYTHON_HOST_PLATFORM="$MACHDEP${_host_cpu:+-$_host_cpu}"
+
+	case "$host_os" in
+	mingw*)
+	# As sys.platform() return 'win32' to build python and extantions
+	# we will use 'mingw' (in setup.py and etc.)
+	_PYTHON_HOST_PLATFORM=mingw
+	;;
+	esac
 fi
 
 # Some systems cannot stand _XOPEN_SOURCE being defined at all; they
@@ -4010,6 +4039,122 @@ then
 $as_echo "#define _INCLUDE__STDC_A1_SOURCE 1" >>confdefs.h
 
 fi
+
+# On 'semi-native' build systems (MSYS*/Cygwin targeting MinGW-w64)
+# _sysconfigdata.py will contain paths that are correct only in the
+# build environment. This means external modules will fail to build
+# without setting up the same env and also that the build of Python
+# itself will fail as the paths are not correct for the host tools.
+#
+# To work around these issues a set of _b2h variables are created:
+# prefix_b2h, srcdir_b2h, abs_srcdir_b2h
+# and abs_builddir_b2h
+# .. where b2h stands for build to host. sysconfig.py replaces path
+# prefixes matching the non-b2h versions with the b2h equivalents.
+#
+# (note this assumes the host compilers are native and *not* cross
+#  - in the 'semi-native' scenario only that is.)
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking absolute host location of prefix" >&5
+$as_echo_n "checking absolute host location of prefix... " >&6; }
+prefix_b2h=$(cd $prefix && pwd)
+  case $build_os in
+    mingw*)
+      case $host_os in
+        mingw*) prefix_b2h=$(cd $prefix && pwd -W) ;;
+        *) ;;
+      esac
+      ;;
+    cygwin*)
+      case $host_os in
+        mingw*) prefix_b2h=$(cygpath -w -m $prefix) ;;
+        *) ;;
+      esac
+      ;;
+  esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $prefix_b2h" >&5
+$as_echo "$prefix_b2h" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking absolute host location of srcdir" >&5
+$as_echo_n "checking absolute host location of srcdir... " >&6; }
+srcdir_b2h=$(cd $srcdir && pwd)
+  case $build_os in
+    mingw*)
+      case $host_os in
+        mingw*) srcdir_b2h=$(cd $srcdir && pwd -W) ;;
+        *) ;;
+      esac
+      ;;
+    cygwin*)
+      case $host_os in
+        mingw*) srcdir_b2h=$(cygpath -w -m $srcdir) ;;
+        *) ;;
+      esac
+      ;;
+  esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $srcdir_b2h" >&5
+$as_echo "$srcdir_b2h" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking absolute host location of abs_srcdir" >&5
+$as_echo_n "checking absolute host location of abs_srcdir... " >&6; }
+abs_srcdir_b2h=$(cd $srcdir && pwd)
+  case $build_os in
+    mingw*)
+      case $host_os in
+        mingw*) abs_srcdir_b2h=$(cd $srcdir && pwd -W) ;;
+        *) ;;
+      esac
+      ;;
+    cygwin*)
+      case $host_os in
+        mingw*) abs_srcdir_b2h=$(cygpath -w -m $srcdir) ;;
+        *) ;;
+      esac
+      ;;
+  esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $abs_srcdir_b2h" >&5
+$as_echo "$abs_srcdir_b2h" >&6; }
+
+my_builddir=.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Absolute host location of abs_builddir" >&5
+$as_echo_n "checking Absolute host location of abs_builddir... " >&6; }
+abs_builddir_b2h=$(cd $my_builddir && pwd)
+  case $build_os in
+    mingw*)
+      case $host_os in
+        mingw*) abs_builddir_b2h=$(cd $my_builddir && pwd -W) ;;
+        *) ;;
+      esac
+      ;;
+    cygwin*)
+      case $host_os in
+        mingw*) abs_builddir_b2h=$(cygpath -w -m $my_builddir) ;;
+        *) ;;
+      esac
+      ;;
+  esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $abs_builddir_b2h" >&5
+$as_echo "$abs_builddir_b2h" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for init system calls" >&5
+$as_echo_n "checking for init system calls... " >&6; }
+
+case $host in
+  *-*-mingw*)	INITSYS=nt;;
+  *)		INITSYS=posix;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $INITSYS" >&5
+$as_echo "$INITSYS" >&6; }
 
 # Record the configure-time value of MACOSX_DEPLOYMENT_TARGET,
 # it may influence the way we can build extensions, so distutils
@@ -4442,7 +4587,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -4582,7 +4727,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
 int
-main ()
+main (void)
 {
 FILE *f = fopen ("conftest.out", "w");
  return ferror (f) || fclose (f) != 0;
@@ -4646,7 +4791,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -4697,7 +4842,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 #ifndef __GNUC__
        choke me
@@ -4738,7 +4883,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -4753,7 +4898,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -4769,7 +4914,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -4818,9 +4963,7 @@ struct stat;
 /* Most of the following tests are stolen from RCS 5.7's src/conf.sh.  */
 struct buf { int x; };
 FILE * (*rcsopen) (struct buf *, struct stat *, int);
-static char *e (p, i)
-     char **p;
-     int i;
+static char *e (char **p, int i)
 {
   return p[i];
 }
@@ -4855,7 +4998,7 @@ int pairnames (int, char **, FILE *(*)(struct buf *, struct stat *, int), int, i
 int argc;
 char **argv;
 int
-main ()
+main (void)
 {
 return f (e, argv, 0) != argv[0]  ||  f (e, argv, 1) != argv[1];
   ;
@@ -5287,7 +5430,7 @@ else
 #include <float.h>
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -5357,7 +5500,7 @@ else
 
 #define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
 int
-main ()
+main (void)
 {
   int i;
   for (i = 0; i < 256; i++)
@@ -5436,7 +5579,7 @@ else
 #         define __EXTENSIONS__ 1
           $ac_includes_default
 int
-main ()
+main (void)
 {
 
   ;
@@ -6304,7 +6447,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -6326,6 +6469,30 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_wl_no_as_needed" >&5
 $as_echo "$ac_cv_wl_no_as_needed" >&6; }
 
+
+# initialize default configuration
+py_config=
+case $host in
+  *-*-mingw*) py_config=mingw ;;
+esac
+if test -n "$py_config" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: loading configure defaults from .../Misc/config_$py_config\"" >&5
+$as_echo "$as_me: loading configure defaults from .../Misc/config_$py_config\"" >&6;}
+  . "$srcdir/Misc/config_$py_config"
+fi
+
+# initialize defaults for cross-builds
+if test "$cross_compiling" = yes; then
+  py_config=$host_os
+  case $py_config in
+    mingw32*) py_config=mingw32 ;;
+  esac
+  if test -f "$srcdir/Misc/cross_$py_config" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: loading cross defaults from .../Misc/cross_$py_config\"" >&5
+$as_echo "$as_me: loading cross defaults from .../Misc/cross_$py_config\"" >&6;}
+    . "$srcdir/Misc/cross_$py_config"
+  fi
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the Android API level" >&5
 $as_echo_n "checking for the Android API level... " >&6; }
@@ -6370,7 +6537,7 @@ rm -f conftest.c conftest.out
 case $ac_sys_system/$ac_sys_release in #(
   atheos*|Linux*/1*) :
 
-    as_fn_error $? "This system \($ac_sys_system/$ac_sys_release\) is no longer supported. See README for details." "$LINENO" 5
+    as_fn_error $? " This system \($ac_sys_system/$ac_sys_release\) is no longer supported. See README for details." "$LINENO" 5
 
  ;; #(
   *) :
@@ -6489,6 +6656,8 @@ else
     EXEEXT=.js ;; #(
   WASI/*) :
     EXEEXT=.wasm ;; #(
+  MINGW*) :
+    EXEEXT=.exe ;; #(
   *) :
     EXEEXT=
    ;;
@@ -6519,6 +6688,14 @@ $as_echo "no" >&6; }
 	BUILDEXEEXT=$EXEEXT
 fi
 rmdir CaseSensitiveTestDir
+
+case $ac_sys_system in #(
+  MINGW) :
+    BUILDEXEEXT=".exe"
+ ;; #(
+  *) :
+     ;;
+esac
 
 case $ac_sys_system in
 hp*|HP*)
@@ -6733,6 +6910,11 @@ $as_echo "#define Py_ENABLE_SHARED 1" >>confdefs.h
           LDLIBRARY='libpython$(LDVERSION).dll.a'
           DLLLIBRARY='libpython$(LDVERSION).dll'
           ;;
+    MINGW*)
+          LDLIBRARY='libpython$(LDVERSION).dll.a'
+          DLLLIBRARY='libpython$(LDVERSION).dll'
+          BLDLIBRARY='-L. -lpython$(LDVERSION)'
+          ;;
     SunOS*)
 	  LDLIBRARY='libpython$(LDVERSION).so'
 	  BLDLIBRARY='-Wl,-R,$(LIBDIR) -L. -lpython$(LDVERSION)'
@@ -6782,6 +6964,9 @@ else # shared is disabled
     CYGWIN*)
           BLDLIBRARY='$(LIBRARY)'
           LDLIBRARY='libpython$(LDVERSION).dll.a'
+          ;;
+    MINGW*)
+          LDLIBRARY='libpython$(LDVERSION).a'
           ;;
   esac
 fi
@@ -7099,6 +7284,101 @@ ac_tool_warned=yes ;;
 esac
     AR=$ac_ct_AR
   fi
+fi
+
+
+# windres program
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}windres", so it can be a program name with args.
+set dummy ${ac_tool_prefix}windres; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_WINDRES+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$WINDRES"; then
+  ac_cv_prog_WINDRES="$WINDRES" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_WINDRES="${ac_tool_prefix}windres"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+WINDRES=$ac_cv_prog_WINDRES
+if test -n "$WINDRES"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $WINDRES" >&5
+$as_echo "$WINDRES" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_WINDRES"; then
+  ac_ct_WINDRES=$WINDRES
+  # Extract the first word of "windres", so it can be a program name with args.
+set dummy windres; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_WINDRES+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_WINDRES"; then
+  ac_cv_prog_ac_ct_WINDRES="$ac_ct_WINDRES" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_WINDRES="windres"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_WINDRES=$ac_cv_prog_ac_ct_WINDRES
+if test -n "$ac_ct_WINDRES"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_WINDRES" >&5
+$as_echo "$ac_ct_WINDRES" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_WINDRES" = x; then
+    WINDRES=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    WINDRES=$ac_ct_WINDRES
+  fi
+else
+  WINDRES="$ac_cv_prog_WINDRES"
 fi
 
 
@@ -7520,7 +7800,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -7646,7 +7926,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8066,7 +8346,7 @@ else
 
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8275,7 +8555,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8316,7 +8596,7 @@ else
 
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8333,7 +8613,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 
 	       void f(int **x) {}
 int
-main ()
+main (void)
 {
 double *x; f((int **) &x);
   ;
@@ -8386,7 +8666,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8428,7 +8708,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8466,7 +8746,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8504,7 +8784,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8542,7 +8822,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8580,7 +8860,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8630,7 +8910,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8666,7 +8946,7 @@ else
 
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8705,7 +8985,7 @@ else
 
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -8887,7 +9167,7 @@ $as_echo_n "checking if specified universal architectures work... " >&6; }
 /* end confdefs.h.  */
 #include <stdio.h>
 int
-main ()
+main (void)
 {
 printf("%d", 42);
   ;
@@ -8944,6 +9224,62 @@ then
 	BASECFLAGS="$BASECFLAGS $ac_arch_flags"
 fi
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-nt-threads" >&5
+$as_echo_n "checking for --with-nt-threads... " >&6; }
+
+# Check whether --with-nt-threads was given.
+if test "${with_nt_threads+set}" = set; then :
+  withval=$with_nt_threads;
+	case $withval in
+	no)	with_nt_threads=no;;
+	yes)	with_nt_threads=yes;;
+	*)	with_nt_threads=yes;;
+	esac
+
+else
+
+	case $host in
+		*-*-mingw*) with_nt_threads=yes;;
+		*) with_nt_threads=no;;
+	esac
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_nt_threads" >&5
+$as_echo "$with_nt_threads" >&6; }
+
+if test $with_nt_threads = yes ; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether linking with nt-threads work" >&5
+$as_echo_n "checking whether linking with nt-threads work... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+    #include <process.h>
+int
+main (void)
+{
+_beginthread(0, 0, 0);
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  as_fn_error $? "failed to link with nt-threads" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $with_nt_threads = yes ; then
+      ac_cv_pthread_is_default=no
+  ac_cv_kthread=no
+  ac_cv_pthread=no
+  else
 # On some compilers, pthreads are available without further options
 # (e.g. MacOS X). On some of these systems, the compiler will not
 # complain if unaccepted options are passed (e.g. gcc on Mac OS X).
@@ -9142,6 +9478,8 @@ fi
 $as_echo "$ac_cv_pthread" >&6; }
 fi
 
+fi
+
 # If we have set a CC compiler flag for thread support then
 # check if it works for CXX, too.
 ac_cv_cxx_thread=no
@@ -9163,6 +9501,9 @@ elif test "$ac_cv_pthread" = "yes"
 then
   CXX="$CXX -pthread"
   ac_cv_cxx_thread=yes
+elif test $with_nt_threads = yes
+then
+    ac_cv_cxx_thread=always
 fi
 
 if test $ac_cv_cxx_thread = yes
@@ -9190,11 +9531,11 @@ $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 
 # checks for header files
 for ac_header in  \
-  alloca.h asm/types.h bluetooth.h conio.h crypt.h direct.h dlfcn.h endian.h errno.h fcntl.h grp.h \
+  alloca.h asm/types.h bluetooth.h conio.h crypt.h direct.h endian.h errno.h fcntl.h grp.h \
   ieeefp.h io.h langinfo.h libintl.h libutil.h linux/auxvec.h sys/auxv.h linux/limits.h linux/memfd.h \
   linux/random.h linux/soundcard.h \
-  linux/tipc.h linux/wait.h netdb.h netinet/in.h netpacket/packet.h poll.h process.h pthread.h pty.h \
-  sched.h setjmp.h shadow.h signal.h spawn.h stropts.h sys/audioio.h sys/bsdtty.h sys/devpoll.h \
+  linux/tipc.h linux/wait.h netdb.h netinet/in.h netpacket/packet.h poll.h process.h pty.h \
+  setjmp.h shadow.h signal.h spawn.h stropts.h sys/audioio.h sys/bsdtty.h sys/devpoll.h \
   sys/endian.h sys/epoll.h sys/event.h sys/eventfd.h sys/file.h sys/ioctl.h sys/kern_control.h \
   sys/loadavg.h sys/lock.h sys/memfd.h sys/mkdev.h sys/mman.h sys/modem.h sys/param.h sys/poll.h \
   sys/random.h sys/resource.h sys/select.h sys/sendfile.h sys/socket.h sys/soundcard.h sys/stat.h \
@@ -9214,6 +9555,24 @@ fi
 
 done
 
+
+case $host in
+  *-*-mingw*) ;;
+  *) for ac_header in dlfcn.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default"
+if test "x$ac_cv_header_dlfcn_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DLFCN_H 1
+_ACEOF
+
+fi
+
+done
+;;
+esac
+
+
 ac_header_dirent=no
 for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h; do
   as_ac_Header=`$as_echo "ac_cv_header_dirent_$ac_hdr" | $as_tr_sh`
@@ -9228,7 +9587,7 @@ else
 #include <$ac_hdr>
 
 int
-main ()
+main (void)
 {
 if ((DIR *) 0)
 return 0;
@@ -9272,9 +9631,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char opendir ();
+char opendir (void);
 int
-main ()
+main (void)
 {
 return opendir ();
   ;
@@ -9329,9 +9688,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char opendir ();
+char opendir (void);
 int
-main ()
+main (void)
 {
 return opendir ();
   ;
@@ -9381,7 +9740,7 @@ else
 /* end confdefs.h.  */
 #include <sys/types.h>
 int
-main ()
+main (void)
 {
 return makedev(0, 0);
   ;
@@ -9422,6 +9781,343 @@ fi
   fi
 fi
 
+
+# If using nt threads, don't look for pthread.h or thread.h
+if test "x$with_nt_threads" = xno ; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
+$as_echo_n "checking for ANSI C header files... " >&6; }
+if ${ac_cv_header_stdc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <float.h>
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_header_stdc=yes
+else
+  ac_cv_header_stdc=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+if test $ac_cv_header_stdc = yes; then
+  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "memchr" >/dev/null 2>&1; then :
+
+else
+  ac_cv_header_stdc=no
+fi
+rm -f conftest*
+
+fi
+
+if test $ac_cv_header_stdc = yes; then
+  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "free" >/dev/null 2>&1; then :
+
+else
+  ac_cv_header_stdc=no
+fi
+rm -f conftest*
+
+fi
+
+if test $ac_cv_header_stdc = yes; then
+  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
+  if test "$cross_compiling" = yes; then :
+  :
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ctype.h>
+#include <stdlib.h>
+#if ((' ' & 0x0FF) == 0x020)
+# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
+# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
+#else
+# define ISLOWER(c) \
+		   (('a' <= (c) && (c) <= 'i') \
+		     || ('j' <= (c) && (c) <= 'r') \
+		     || ('s' <= (c) && (c) <= 'z'))
+# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
+#endif
+
+#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
+int
+main (void)
+{
+  int i;
+  for (i = 0; i < 256; i++)
+    if (XOR (islower (i), ISLOWER (i))
+	|| toupper (i) != TOUPPER (i))
+      return 2;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+else
+  ac_cv_header_stdc=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
+$as_echo "$ac_cv_header_stdc" >&6; }
+if test $ac_cv_header_stdc = yes; then
+
+$as_echo "#define STDC_HEADERS 1" >>confdefs.h
+
+fi
+
+for ac_header in pthread.h sched.h thread.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+ac_header_dirent=no
+for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h; do
+  as_ac_Header=`$as_echo "ac_cv_header_dirent_$ac_hdr" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_hdr that defines DIR" >&5
+$as_echo_n "checking for $ac_hdr that defines DIR... " >&6; }
+if eval \${$as_ac_Header+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <$ac_hdr>
+
+int
+main (void)
+{
+if ((DIR *) 0)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_ac_Header=yes"
+else
+  eval "$as_ac_Header=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$as_ac_Header
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_hdr" | $as_tr_cpp` 1
+_ACEOF
+
+ac_header_dirent=$ac_hdr; break
+fi
+
+done
+# Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
+if test $ac_header_dirent = dirent.h; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing opendir" >&5
+$as_echo_n "checking for library containing opendir... " >&6; }
+if ${ac_cv_search_opendir+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char opendir (void);
+int
+main (void)
+{
+return opendir ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' dir; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_opendir=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_opendir+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_opendir+:} false; then :
+
+else
+  ac_cv_search_opendir=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_opendir" >&5
+$as_echo "$ac_cv_search_opendir" >&6; }
+ac_res=$ac_cv_search_opendir
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing opendir" >&5
+$as_echo_n "checking for library containing opendir... " >&6; }
+if ${ac_cv_search_opendir+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char opendir (void);
+int
+main (void)
+{
+return opendir ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' x; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_opendir=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_opendir+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_opendir+:} false; then :
+
+else
+  ac_cv_search_opendir=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_opendir" >&5
+$as_echo "$ac_cv_search_opendir" >&6; }
+ac_res=$ac_cv_search_opendir
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether sys/types.h defines makedev" >&5
+$as_echo_n "checking whether sys/types.h defines makedev... " >&6; }
+if ${ac_cv_header_sys_types_h_makedev+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+int
+main (void)
+{
+return makedev(0, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_header_sys_types_h_makedev=yes
+else
+  ac_cv_header_sys_types_h_makedev=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_sys_types_h_makedev" >&5
+$as_echo "$ac_cv_header_sys_types_h_makedev" >&6; }
+
+if test $ac_cv_header_sys_types_h_makedev = no; then
+ac_fn_c_check_header_mongrel "$LINENO" "sys/mkdev.h" "ac_cv_header_sys_mkdev_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_mkdev_h" = xyes; then :
+
+$as_echo "#define MAJOR_IN_MKDEV 1" >>confdefs.h
+
+fi
+
+
+
+  if test $ac_cv_header_sys_mkdev_h = no; then
+    ac_fn_c_check_header_mongrel "$LINENO" "sys/sysmacros.h" "ac_cv_header_sys_sysmacros_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_sysmacros_h" = xyes; then :
+
+$as_echo "#define MAJOR_IN_SYSMACROS 1" >>confdefs.h
+
+fi
+
+
+  fi
+fi
+
+fi
 
 # bluetooth/bluetooth.h has been known to not compile with -std=c99.
 # http://permalink.gmane.org/gmane.linux.bluez.kernel/22294
@@ -9595,7 +10291,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #endif
 
 int
-main ()
+main (void)
 {
 
   makedev(0, 0)
@@ -9641,7 +10337,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #endif
 
 int
-main ()
+main (void)
 {
 
    le64toh(1)
@@ -10248,7 +10944,7 @@ else
 		 not support it.  */
 	      long double foo = 0.0L;
 int
-main ()
+main (void)
 {
 static int test_array [1 - 2 * !(/* On Ultrix 4.3 cc, long double is 4 and double is 8.  */
 	      sizeof (double) <= sizeof (long double))];
@@ -10397,6 +11093,13 @@ case $ac_sys_system in #(
   *) :
      ;;
 esac
+case $ac_sys_system in #(
+  MINGW) :
+    have_largefile_support="yes"
+ ;; #(
+  *) :
+     ;;
+esac
 if test "x$have_largefile_support" = xyes; then :
 
 
@@ -10464,6 +11167,9 @@ elif test "$ac_cv_pthread" = "yes"
 then CC="$CC -pthread"
 fi
 
+if test $with_nt_threads = yes ; then
+    ac_cv_have_pthread_t=skip
+else
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_t" >&5
 $as_echo_n "checking for pthread_t... " >&6; }
 if ${ac_cv_have_pthread_t+:} false; then :
@@ -10475,7 +11181,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 
   #include <pthread.h>
 int
-main ()
+main (void)
 {
 pthread_t x; x = *(pthread_t*)0;
   ;
@@ -10583,7 +11289,7 @@ if test "$ac_cv_sizeof_pthread_key_t" -eq "$ac_cv_sizeof_int" ; then
 /* end confdefs.h.  */
 #include <pthread.h>
 int
-main ()
+main (void)
 {
 pthread_key_t k; k * 1;
   ;
@@ -10611,7 +11317,7 @@ $as_echo "#define PTHREAD_KEY_T_IS_COMPATIBLE_WITH_INT 1" >>confdefs.h
 
 
 fi
-
+fi
 CC="$ac_save_cc"
 
 
@@ -10781,7 +11487,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -10859,6 +11565,9 @@ if test -z "$SHLIB_SUFFIX"; then
 		;;
 	CYGWIN*)   SHLIB_SUFFIX=.dll;;
 	*)	   SHLIB_SUFFIX=.so;;
+	esac
+	case $host_os in
+	mingw*)    SHLIB_SUFFIX=.pyd;;
 	esac
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SHLIB_SUFFIX" >&5
@@ -10992,6 +11701,10 @@ fi;;
 	CYGWIN*)
 		LDSHARED="gcc -shared -Wl,--enable-auto-image-base"
 		LDCXXSHARED="g++ -shared -Wl,--enable-auto-image-base";;
+  MINGW*)
+    LDSHARED='$(CC) -shared -Wl,--enable-auto-image-base'
+    LDCXXSHARED='$(CXX) -shared -Wl,--enable-auto-image-base'
+    ;;
 	*)	LDSHARED="ld";;
 	esac
 fi
@@ -11123,6 +11836,11 @@ _ACEOF
 	VxWorks*)
 		LINKFORSHARED='-Wl,-export-dynamic';;
 	esac
+	case $host in
+	*-*-mingw*)
+		# for https://bugs.python.org/issue40458 on MINGW
+		LINKFORSHARED="-Wl,--stack,2000000";;
+	esac
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LINKFORSHARED" >&5
 $as_echo "$LINKFORSHARED" >&6; }
@@ -11188,9 +11906,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sendfile ();
+char sendfile (void);
 int
-main ()
+main (void)
 {
 return sendfile ();
   ;
@@ -11217,7 +11935,10 @@ _ACEOF
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
+
+case $host in
+  *-*-mingw*) ;;
+  *) { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
 $as_echo_n "checking for dlopen in -ldl... " >&6; }
 if ${ac_cv_lib_dl_dlopen+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -11233,9 +11954,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dlopen ();
+char dlopen (void);
 int
-main ()
+main (void)
 {
 return dlopen ();
   ;
@@ -11261,7 +11982,9 @@ _ACEOF
   LIBS="-ldl $LIBS"
 
 fi
-	# Dynamic linking for SunOS/Solaris and SYSV
+ ;;	# Dynamic linking for SunOS/Solaris and SYSV
+esac
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -ldld" >&5
 $as_echo_n "checking for shl_load in -ldld... " >&6; }
 if ${ac_cv_lib_dld_shl_load+:} false; then :
@@ -11278,9 +12001,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char shl_load ();
+char shl_load (void);
 int
-main ()
+main (void)
 {
 return shl_load ();
   ;
@@ -11348,8 +12071,8 @@ if test "x$have_uuid" = xmissing; then :
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBUUID" >&5
-$as_echo_n "checking for LIBUUID... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uuid >= 2.20" >&5
+$as_echo_n "checking for uuid >= 2.20... " >&6; }
 
 if test -n "$LIBUUID_CFLAGS"; then
     pkg_cv_LIBUUID_CFLAGS="$LIBUUID_CFLAGS"
@@ -11389,7 +12112,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -11398,12 +12121,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBUUID_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "uuid >= 2.20" 2>&1`
+                LIBUUID_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "uuid >= 2.20" 2>&1`
         else
-	        LIBUUID_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "uuid >= 2.20" 2>&1`
+                LIBUUID_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "uuid >= 2.20" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBUUID_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBUUID_PKG_ERRORS" >&5
 
 
       save_CFLAGS=$CFLAGS
@@ -11439,9 +12162,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char uuid_generate_time ();
+char uuid_generate_time (void);
 int
-main ()
+main (void)
 {
 return uuid_generate_time ();
   ;
@@ -11482,9 +12205,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char uuid_generate_time_safe ();
+char uuid_generate_time_safe (void);
 int
-main ()
+main (void)
 {
 return uuid_generate_time_safe ();
   ;
@@ -11532,7 +12255,7 @@ LIBS=$save_LIBS
 
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
       save_CFLAGS=$CFLAGS
@@ -11568,9 +12291,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char uuid_generate_time ();
+char uuid_generate_time (void);
 int
-main ()
+main (void)
 {
 return uuid_generate_time ();
   ;
@@ -11611,9 +12334,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char uuid_generate_time_safe ();
+char uuid_generate_time_safe (void);
 int
-main ()
+main (void)
 {
 return uuid_generate_time_safe ();
   ;
@@ -11661,8 +12384,8 @@ LIBS=$save_LIBS
 
 
 else
-	LIBUUID_CFLAGS=$pkg_cv_LIBUUID_CFLAGS
-	LIBUUID_LIBS=$pkg_cv_LIBUUID_LIBS
+        LIBUUID_CFLAGS=$pkg_cv_LIBUUID_CFLAGS
+        LIBUUID_LIBS=$pkg_cv_LIBUUID_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -11707,6 +12430,9 @@ if test "x$have_uuid" = xmissing; then :
   have_uuid=no
 fi
 
+if test $with_nt_threads = yes ; then
+    :
+else
 # 'Real Time' functions on Solaris
 # posix4 on Solaris 2.6
 # pthread (first!) on Linux
@@ -11725,9 +12451,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sem_init ();
+char sem_init (void);
 int
-main ()
+main (void)
 {
 return sem_init ();
   ;
@@ -11766,8 +12492,13 @@ if test "$ac_res" != no; then :
 
 fi
 
+fi
 
 # check if we need libintl for locale functions
+case $host in
+  *-*-mingw*)
+        ;;
+  *)
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for textdomain in -lintl" >&5
 $as_echo_n "checking for textdomain in -lintl... " >&6; }
 if ${ac_cv_lib_intl_textdomain+:} false; then :
@@ -11784,9 +12515,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char textdomain ();
+char textdomain (void);
 int
-main ()
+main (void)
 {
 return textdomain ();
   ;
@@ -11811,6 +12542,8 @@ $as_echo "#define WITH_LIBINTL 1" >>confdefs.h
         LIBS="-lintl $LIBS"
 fi
 
+  ;;
+esac
 
 # checks for system dependent C++ extensions support
 case "$ac_sys_system" in
@@ -11821,7 +12554,7 @@ $as_echo_n "checking for genuine AIX C++ extensions support... " >&6; }
 
 		  #include <load.h>
 int
-main ()
+main (void)
 {
 loadAndInit("", 0, "")
   ;
@@ -11999,9 +12732,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char t_open ();
+char t_open (void);
 int
-main ()
+main (void)
 {
 return t_open ();
   ;
@@ -12039,9 +12772,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char socket ();
+char socket (void);
 int
-main ()
+main (void)
 {
 return socket ();
   ;
@@ -12082,9 +12815,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char socket ();
+char socket (void);
 int
-main ()
+main (void)
 {
 return socket ();
   ;
@@ -12194,7 +12927,7 @@ $as_echo "$as_me: WARNING: --with(out)-system-ffi is ignored on this platform" >
 fi
 
 if test "$with_system_ffi" = "yes" && test -n "$PKG_CONFIG"; then
-    LIBFFI_INCLUDEDIR="`"$PKG_CONFIG" libffi --cflags-only-I 2>/dev/null | sed -e 's/^-I//;s/ *$//'`"
+    LIBFFI_INCLUDEDIR="`"$PKG_CONFIG" libffi --cflags-only-I 2>/dev/null | sed -e 's/^-I//;s/ .*$//'`"
 else
     LIBFFI_INCLUDEDIR=""
 fi
@@ -12340,8 +13073,8 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBNSL" >&5
-$as_echo_n "checking for LIBNSL... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libnsl" >&5
+$as_echo_n "checking for libnsl... " >&6; }
 
 if test -n "$LIBNSL_CFLAGS"; then
     pkg_cv_LIBNSL_CFLAGS="$LIBNSL_CFLAGS"
@@ -12381,7 +13114,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -12390,12 +13123,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBNSL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libnsl" 2>&1`
+                LIBNSL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libnsl" 2>&1`
         else
-	        LIBNSL_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libnsl" 2>&1`
+                LIBNSL_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libnsl" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBNSL_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBNSL_PKG_ERRORS" >&5
 
 
   LIBNSL_CFLAGS=${LIBNSL_CFLAGS-""}
@@ -12420,9 +13153,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char yp_match ();
+char yp_match (void);
 int
-main ()
+main (void)
 {
 return yp_match ();
   ;
@@ -12482,7 +13215,7 @@ esac
   LIBNSL_LIBS=${LIBNSL_LIBS-$libnsl}
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
   LIBNSL_CFLAGS=${LIBNSL_CFLAGS-""}
@@ -12507,9 +13240,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char yp_match ();
+char yp_match (void);
 int
-main ()
+main (void)
 {
 return yp_match ();
   ;
@@ -12569,11 +13302,11 @@ esac
   LIBNSL_LIBS=${LIBNSL_LIBS-$libnsl}
 
 else
-	LIBNSL_CFLAGS=$pkg_cv_LIBNSL_CFLAGS
-	LIBNSL_LIBS=$pkg_cv_LIBNSL_LIBS
+        LIBNSL_CFLAGS=$pkg_cv_LIBNSL_CFLAGS
+        LIBNSL_LIBS=$pkg_cv_LIBNSL_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	have_nis=yes
+        have_nis=yes
 fi
 
 if test "x$have_nis" = xyes; then :
@@ -12615,6 +13348,14 @@ case $ac_sys_system in #(
  ;;
 esac
 
+case $ac_sys_system in #(
+  MINGW) :
+    SOCKET_LIBS="-lws2_32 -liphlpapi" ;; #(
+  *) :
+    SOCKET_LIBS=""
+ ;;
+esac
+
 
 
 
@@ -12630,8 +13371,8 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBSQLITE3" >&5
-$as_echo_n "checking for LIBSQLITE3... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3 >= 3.7.15" >&5
+$as_echo_n "checking for sqlite3 >= 3.7.15... " >&6; }
 
 if test -n "$LIBSQLITE3_CFLAGS"; then
     pkg_cv_LIBSQLITE3_CFLAGS="$LIBSQLITE3_CFLAGS"
@@ -12671,7 +13412,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -12680,12 +13421,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBSQLITE3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "sqlite3 >= 3.7.15" 2>&1`
+                LIBSQLITE3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "sqlite3 >= 3.7.15" 2>&1`
         else
-	        LIBSQLITE3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "sqlite3 >= 3.7.15" 2>&1`
+                LIBSQLITE3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "sqlite3 >= 3.7.15" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBSQLITE3_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBSQLITE3_PKG_ERRORS" >&5
 
 
     LIBSQLITE3_CFLAGS=${LIBSQLITE3_CFLAGS-""}
@@ -12693,7 +13434,7 @@ fi
 
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
     LIBSQLITE3_CFLAGS=${LIBSQLITE3_CFLAGS-""}
@@ -12701,8 +13442,8 @@ $as_echo "no" >&6; }
 
 
 else
-	LIBSQLITE3_CFLAGS=$pkg_cv_LIBSQLITE3_CFLAGS
-	LIBSQLITE3_LIBS=$pkg_cv_LIBSQLITE3_LIBS
+        LIBSQLITE3_CFLAGS=$pkg_cv_LIBSQLITE3_CFLAGS
+        LIBSQLITE3_LIBS=$pkg_cv_LIBSQLITE3_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -12735,7 +13476,7 @@ if test "x$ac_cv_header_sqlite3_h" = xyes; then :
         #endif
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -12763,9 +13504,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_bind_double ();
+char sqlite3_bind_double (void);
 int
-main ()
+main (void)
 {
 return sqlite3_bind_double ();
   ;
@@ -12814,9 +13555,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_column_decltype ();
+char sqlite3_column_decltype (void);
 int
-main ()
+main (void)
 {
 return sqlite3_column_decltype ();
   ;
@@ -12865,9 +13606,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_column_double ();
+char sqlite3_column_double (void);
 int
-main ()
+main (void)
 {
 return sqlite3_column_double ();
   ;
@@ -12916,9 +13657,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_complete ();
+char sqlite3_complete (void);
 int
-main ()
+main (void)
 {
 return sqlite3_complete ();
   ;
@@ -12967,9 +13708,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_enable_shared_cache ();
+char sqlite3_enable_shared_cache (void);
 int
-main ()
+main (void)
 {
 return sqlite3_enable_shared_cache ();
   ;
@@ -13018,9 +13759,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_progress_handler ();
+char sqlite3_progress_handler (void);
 int
-main ()
+main (void)
 {
 return sqlite3_progress_handler ();
   ;
@@ -13069,9 +13810,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_result_double ();
+char sqlite3_result_double (void);
 int
-main ()
+main (void)
 {
 return sqlite3_result_double ();
   ;
@@ -13120,9 +13861,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_set_authorizer ();
+char sqlite3_set_authorizer (void);
 int
-main ()
+main (void)
 {
 return sqlite3_set_authorizer ();
   ;
@@ -13171,9 +13912,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_trace_v2 ();
+char sqlite3_trace_v2 (void);
 int
-main ()
+main (void)
 {
 return sqlite3_trace_v2 ();
   ;
@@ -13218,9 +13959,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_trace ();
+char sqlite3_trace (void);
 int
-main ()
+main (void)
 {
 return sqlite3_trace ();
   ;
@@ -13274,9 +14015,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_value_double ();
+char sqlite3_value_double (void);
 int
-main ()
+main (void)
 {
 return sqlite3_value_double ();
   ;
@@ -13324,9 +14065,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_load_extension ();
+char sqlite3_load_extension (void);
 int
-main ()
+main (void)
 {
 return sqlite3_load_extension ();
   ;
@@ -13367,9 +14108,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sqlite3_serialize ();
+char sqlite3_serialize (void);
 int
-main ()
+main (void)
 {
 return sqlite3_serialize ();
   ;
@@ -13462,8 +14203,8 @@ for _QUERY in \
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for TCLTK" >&5
-$as_echo_n "checking for TCLTK... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $_QUERY" >&5
+$as_echo_n "checking for $_QUERY... " >&6; }
 
 if test -n "$TCLTK_CFLAGS"; then
     pkg_cv_TCLTK_CFLAGS="$TCLTK_CFLAGS"
@@ -13503,7 +14244,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -13512,24 +14253,24 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        TCLTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$_QUERY" 2>&1`
+                TCLTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$_QUERY" 2>&1`
         else
-	        TCLTK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$_QUERY" 2>&1`
+                TCLTK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$_QUERY" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$TCLTK_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$TCLTK_PKG_ERRORS" >&5
 
-	found_tcltk=no
+        found_tcltk=no
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	found_tcltk=no
+        found_tcltk=no
 else
-	TCLTK_CFLAGS=$pkg_cv_TCLTK_CFLAGS
-	TCLTK_LIBS=$pkg_cv_TCLTK_LIBS
+        TCLTK_CFLAGS=$pkg_cv_TCLTK_CFLAGS
+        TCLTK_LIBS=$pkg_cv_TCLTK_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	found_tcltk=yes
+        found_tcltk=yes
 fi
 
 fi
@@ -13557,8 +14298,8 @@ case $ac_sys_system in #(
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for X11" >&5
-$as_echo_n "checking for X11... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for x11" >&5
+$as_echo_n "checking for x11... " >&6; }
 
 if test -n "$X11_CFLAGS"; then
     pkg_cv_X11_CFLAGS="$X11_CFLAGS"
@@ -13598,7 +14339,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -13607,14 +14348,14 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        X11_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "x11" 2>&1`
+                X11_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "x11" 2>&1`
         else
-	        X11_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "x11" 2>&1`
+                X11_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "x11" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$X11_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$X11_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (x11) were not met:
+        as_fn_error $? "Package requirements (x11) were not met:
 
 $X11_PKG_ERRORS
 
@@ -13625,9 +14366,9 @@ Alternatively, you may set the environment variables X11_CFLAGS
 and X11_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details." "$LINENO" 5
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
 is in your PATH or set the PKG_CONFIG environment variable to the full
@@ -13640,8 +14381,8 @@ See the pkg-config man page for more details.
 To get pkg-config, see <http://pkg-config.freedesktop.org/>.
 See \`config.log' for more details" "$LINENO" 5; }
 else
-	X11_CFLAGS=$pkg_cv_X11_CFLAGS
-	X11_LIBS=$pkg_cv_X11_LIBS
+        X11_CFLAGS=$pkg_cv_X11_CFLAGS
+        X11_LIBS=$pkg_cv_X11_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -13689,7 +14430,7 @@ save_LIBS=$LIBS
       #endif
 
 int
-main ()
+main (void)
 {
 
       void *x1 = Tcl_Init;
@@ -13754,9 +14495,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gdbm_open ();
+char gdbm_open (void);
 int
-main ()
+main (void)
 {
 return gdbm_open ();
   ;
@@ -13824,9 +14565,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dbm_open ();
+char dbm_open (void);
 int
-main ()
+main (void)
 {
 return dbm_open ();
   ;
@@ -13870,9 +14611,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dbm_open ();
+char dbm_open (void);
 int
-main ()
+main (void)
 {
 return dbm_open ();
   ;
@@ -13977,9 +14718,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dbm_open ();
+char dbm_open (void);
 int
-main ()
+main (void)
 {
 return dbm_open ();
   ;
@@ -14037,7 +14778,7 @@ else
       #endif
 
 int
-main ()
+main (void)
 {
 DBM *dbm = dbm_open(NULL, 0, 0)
   ;
@@ -14107,6 +14848,18 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_dbmliborder" >&5
 $as_echo "$with_dbmliborder" >&6; }
 
+case $host in
+  *-*-mingw*)
+    CFLAGS_NODIST="$CFLAGS_NODIST -D_WIN32_WINNT=0x0602";;
+esac
+
+# Determine if windows modules should be used.
+
+USE_WIN32_MODULE='#'
+case $host in
+  *-*-mingw*) USE_WIN32_MODULE=;;
+esac
+
 # Templates for things AC_DEFINEd more than once.
 # For a single AC_DEFINE, no template is needed.
 
@@ -14141,6 +14894,12 @@ then
         CXX="$CXX -pthread"
     fi
     posix_threads=yes
+elif test $with_nt_threads = yes
+then
+    posix_threads=no
+
+$as_echo "#define NT_THREADS 1" >>confdefs.h
+
 else
     if test ! -z "$withval" -a -d "$withval"
     then LDFLAGS="$LDFLAGS -L$withval"
@@ -14189,7 +14948,7 @@ $as_echo_n "checking for pthread_create in -lpthread... " >&6; }
 
 void * start_routine (void *arg) { exit (0); }
 int
-main ()
+main (void)
 {
 
 pthread_create (NULL, NULL, start_routine, NULL)
@@ -14229,9 +14988,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char pthread_create ();
+char pthread_create (void);
 int
-main ()
+main (void)
 {
 return pthread_create ();
   ;
@@ -14272,9 +15031,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char pthread_create ();
+char pthread_create (void);
 int
-main ()
+main (void)
 {
 return pthread_create ();
   ;
@@ -14315,9 +15074,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char __pthread_create_system ();
+char __pthread_create_system (void);
 int
-main ()
+main (void)
 {
 return __pthread_create_system ();
   ;
@@ -14358,9 +15117,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char pthread_create ();
+char pthread_create (void);
 int
-main ()
+main (void)
 {
 return pthread_create ();
   ;
@@ -14423,9 +15182,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char usconfig ();
+char usconfig (void);
 int
-main ()
+main (void)
 {
 return usconfig ();
   ;
@@ -14587,7 +15346,7 @@ else
 #include <sys/types.h>
 #include <sys/socket.h>
 int
-main ()
+main (void)
 {
 int domain = AF_INET6;
   ;
@@ -14625,7 +15384,7 @@ $as_echo_n "checking if RFC2553 API is available... " >&6; }
 	  #include <sys/types.h>
 #include <netinet/in.h>
 int
-main ()
+main (void)
 {
 struct sockaddr_in6 x;
 			    x.sin6_scope_id;
@@ -14813,7 +15572,7 @@ $as_echo "$as_me: using libc" >&6;}
 
 else
 
-      as_fn_error $? "No $ipv6lib library found; cannot continue. You need to fetch lib$ipv6lib.a from appropriate ipv6 kit and compile beforehand." "$LINENO" 5
+      as_fn_error $? " No $ipv6lib library found; cannot continue. You need to fetch lib$ipv6lib.a from appropriate ipv6 kit and compile beforehand." "$LINENO" 5
 
 fi
 	fi
@@ -14831,7 +15590,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
  /* CAN_RAW_FD_FRAMES available check */
 #include <linux/can/raw.h>
 int
-main ()
+main (void)
 {
 int can_raw_fd_frames = CAN_RAW_FD_FRAMES;
   ;
@@ -14867,7 +15626,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 
 #include <linux/can/raw.h>
 int
-main ()
+main (void)
 {
 int can_raw_join_filters = CAN_RAW_JOIN_FILTERS;
   ;
@@ -14981,7 +15740,10 @@ fi
 
 if test -z "$with_c_locale_coercion"
 then
-    with_c_locale_coercion="yes"
+    case $host in
+      *-*-mingw*) with_c_locale_coercion="no";;
+      *) with_c_locale_coercion="yes";;
+    esac
 fi
 if test "$with_c_locale_coercion" != "no"
 then
@@ -15166,14 +15928,38 @@ then
 	fi
 	;;
 	esac
+	case $host in
+	*-*-mingw*)
+    DYNLOADFILE="dynload_win.o"
+    extra_machdep_objs="$extra_machdep_objs PC/dl_nt.o"
+    CFLAGS_NODIST="$CFLAGS_NODIST -DPY3_DLLNAME='L\"$DLLLIBRARY\"'"
+    case $host in
+        i686*)
+                CFLAGS_NODIST="$CFLAGS_NODIST -DMS_DLL_ID='\"${VERSION}-32\"'"
+            ;;
+        armv7*)
+                CFLAGS_NODIST="$CFLAGS_NODIST -DMS_DLL_ID='\"${VERSION}-arm32\"'"
+            ;;
+        aarch64*)
+                CFLAGS_NODIST="$CFLAGS_NODIST -DMS_DLL_ID='\"${VERSION}-arm64\"'"
+            ;;
+            *)
+                CFLAGS_NODIST="$CFLAGS_NODIST -DMS_DLL_ID='\"$VERSION\"'"
+            ;;
+      esac
+    ;;
+	esac
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DYNLOADFILE" >&5
 $as_echo "$DYNLOADFILE" >&6; }
 if test "$DYNLOADFILE" != "dynload_stub.o"
 then
+  have_dynamic_loading=yes
 
 $as_echo "#define HAVE_DYNAMIC_LOADING 1" >>confdefs.h
 
+else
+  have_dynamic_loading=no
 fi
 
 # MACHDEP_OBJS can be set to platform-specific object files needed by Python
@@ -15196,13 +15982,18 @@ $as_echo "$MACHDEP_OBJS" >&6; }
 fi
 
 # checks for library functions
+if test $with_nt_threads = yes ; then
+          ac_cv_func_pthread_kill=skip
+  ac_cv_func_sem_open=skip
+  ac_cv_func_sched_setscheduler=skip
+fi
 for ac_func in  \
   accept4 alarm bind_textdomain_codeset chmod chown clock close_range confstr \
   copy_file_range ctermid dup dup3 execv explicit_bzero explicit_memset \
   faccessat fchmod fchmodat fchown fchownat fdopendir fdwalk fexecve \
   fork fork1 fpathconf fstatat ftime ftruncate futimens futimes futimesat \
   gai_strerror getegid getentropy geteuid getgid getgrgid getgrgid_r \
-  getgrnam_r getgrouplist getgroups gethostname getitimer getloadavg getlogin \
+  getgrnam_r getgrouplist getgroups getitimer getloadavg getlogin \
   getpeername getpgid getpid getppid getpriority _getpty \
   getpwent getpwnam_r getpwuid getpwuid_r getresgid getresuid getrusage getsid getspent \
   getspnam getuid getwd if_nameindex initgroups kill killpg lchown linkat \
@@ -15215,7 +16006,7 @@ for ac_func in  \
   sched_setparam sched_setscheduler sem_clockwait sem_getvalue sem_open \
   sem_timedwait sem_unlink sendfile setegid seteuid setgid sethostname \
   setitimer setlocale setpgid setpgrp setpriority setregid setresgid \
-  setresuid setreuid setsid setuid setvbuf shutdown sigaction sigaltstack \
+  setresuid setreuid setsid setuid setvbuf sigaction sigaltstack \
   sigfillset siginterrupt sigpending sigrelse sigtimedwait sigwait \
   sigwaitinfo snprintf splice strftime strlcpy strsignal symlinkat sync \
   sysconf system tcgetpgrp tcsetpgrp tempnam timegm times tmpfile \
@@ -15276,7 +16067,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=chroot
   ;
@@ -15312,7 +16103,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=link
   ;
@@ -15348,7 +16139,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=symlink
   ;
@@ -15384,7 +16175,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=fchdir
   ;
@@ -15420,7 +16211,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=fsync
   ;
@@ -15456,7 +16247,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=fdatasync
   ;
@@ -15492,7 +16283,7 @@ else
 /* end confdefs.h.  */
 #include <sys/epoll.h>
 int
-main ()
+main (void)
 {
 void *x=epoll_create
   ;
@@ -15528,7 +16319,7 @@ else
 /* end confdefs.h.  */
 #include <sys/epoll.h>
 int
-main ()
+main (void)
 {
 void *x=epoll_create1
   ;
@@ -15567,7 +16358,7 @@ else
 #include <sys/event.h>
 
 int
-main ()
+main (void)
 {
 void *x=kqueue
   ;
@@ -15606,7 +16397,7 @@ else
 #include <sys/resource.h>
 
 int
-main ()
+main (void)
 {
 void *x=prlimit
   ;
@@ -15643,7 +16434,7 @@ else
 /* end confdefs.h.  */
 #include <mach-o/dyld.h>
 int
-main ()
+main (void)
 {
 void *x=_dyld_shared_cache_contains_path
   ;
@@ -15687,7 +16478,7 @@ else
 #endif
 
 int
-main ()
+main (void)
 {
 void *x=memfd_create
   ;
@@ -15728,7 +16519,7 @@ else
 #endif
 
 int
-main ()
+main (void)
 {
 void *x=eventfd
   ;
@@ -15771,7 +16562,7 @@ else
 /* end confdefs.h.  */
 #include <stdio.h>
 int
-main ()
+main (void)
 {
 void *x=ctermid_r
   ;
@@ -15806,7 +16597,7 @@ else
 /* end confdefs.h.  */
 #include <sys/file.h>
 int
-main ()
+main (void)
 {
 void* p = flock
 
@@ -15851,9 +16642,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char flock ();
+char flock (void);
 int
-main ()
+main (void)
 {
 return flock ();
   ;
@@ -15891,7 +16682,7 @@ else
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 void *x=getpagesize
   ;
@@ -15926,7 +16717,7 @@ else
 /* end confdefs.h.  */
 #include <stdlib.h>
 int
-main ()
+main (void)
 {
 int res = unsetenv("DUMMY")
   ;
@@ -16012,9 +16803,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char inet_aton ();
+char inet_aton (void);
 int
-main ()
+main (void)
 {
 return inet_aton ();
   ;
@@ -16051,9 +16842,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char inet_aton ();
+char inet_aton (void);
 int
-main ()
+main (void)
 {
 return inet_aton ();
   ;
@@ -16201,8 +16992,8 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZLIB" >&5
-$as_echo_n "checking for ZLIB... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for zlib >= 1.2.0" >&5
+$as_echo_n "checking for zlib >= 1.2.0... " >&6; }
 
 if test -n "$ZLIB_CFLAGS"; then
     pkg_cv_ZLIB_CFLAGS="$ZLIB_CFLAGS"
@@ -16242,7 +17033,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -16251,12 +17042,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        ZLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "zlib >= 1.2.0" 2>&1`
+                ZLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "zlib >= 1.2.0" 2>&1`
         else
-	        ZLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "zlib >= 1.2.0" 2>&1`
+                ZLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "zlib >= 1.2.0" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$ZLIB_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$ZLIB_PKG_ERRORS" >&5
 
 
   save_CFLAGS=$CFLAGS
@@ -16292,9 +17083,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gzread ();
+char gzread (void);
 int
-main ()
+main (void)
 {
 return gzread ();
   ;
@@ -16348,9 +17139,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char inflateCopy ();
+char inflateCopy (void);
 int
-main ()
+main (void)
 {
 return inflateCopy ();
   ;
@@ -16386,7 +17177,7 @@ LIBS=$save_LIBS
 
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
   save_CFLAGS=$CFLAGS
@@ -16422,9 +17213,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gzread ();
+char gzread (void);
 int
-main ()
+main (void)
 {
 return gzread ();
   ;
@@ -16478,9 +17269,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char inflateCopy ();
+char inflateCopy (void);
 int
-main ()
+main (void)
 {
 return inflateCopy ();
   ;
@@ -16516,8 +17307,8 @@ LIBS=$save_LIBS
 
 
 else
-	ZLIB_CFLAGS=$pkg_cv_ZLIB_CFLAGS
-	ZLIB_LIBS=$pkg_cv_ZLIB_LIBS
+        ZLIB_CFLAGS=$pkg_cv_ZLIB_CFLAGS
+        ZLIB_LIBS=$pkg_cv_ZLIB_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -16549,8 +17340,8 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for BZIP2" >&5
-$as_echo_n "checking for BZIP2... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for bzip2" >&5
+$as_echo_n "checking for bzip2... " >&6; }
 
 if test -n "$BZIP2_CFLAGS"; then
     pkg_cv_BZIP2_CFLAGS="$BZIP2_CFLAGS"
@@ -16590,7 +17381,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -16599,12 +17390,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        BZIP2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "bzip2" 2>&1`
+                BZIP2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "bzip2" 2>&1`
         else
-	        BZIP2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "bzip2" 2>&1`
+                BZIP2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "bzip2" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$BZIP2_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$BZIP2_PKG_ERRORS" >&5
 
 
   save_CFLAGS=$CFLAGS
@@ -16639,9 +17430,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char BZ2_bzCompress ();
+char BZ2_bzCompress (void);
 int
-main ()
+main (void)
 {
 return BZ2_bzCompress ();
   ;
@@ -16687,7 +17478,7 @@ LIBS=$save_LIBS
 
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
   save_CFLAGS=$CFLAGS
@@ -16722,9 +17513,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char BZ2_bzCompress ();
+char BZ2_bzCompress (void);
 int
-main ()
+main (void)
 {
 return BZ2_bzCompress ();
   ;
@@ -16770,17 +17561,17 @@ LIBS=$save_LIBS
 
 
 else
-	BZIP2_CFLAGS=$pkg_cv_BZIP2_CFLAGS
-	BZIP2_LIBS=$pkg_cv_BZIP2_LIBS
+        BZIP2_CFLAGS=$pkg_cv_BZIP2_CFLAGS
+        BZIP2_LIBS=$pkg_cv_BZIP2_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	have_bzip2=yes
+        have_bzip2=yes
 fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBLZMA" >&5
-$as_echo_n "checking for LIBLZMA... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for liblzma" >&5
+$as_echo_n "checking for liblzma... " >&6; }
 
 if test -n "$LIBLZMA_CFLAGS"; then
     pkg_cv_LIBLZMA_CFLAGS="$LIBLZMA_CFLAGS"
@@ -16820,7 +17611,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -16829,12 +17620,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBLZMA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "liblzma" 2>&1`
+                LIBLZMA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "liblzma" 2>&1`
         else
-	        LIBLZMA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "liblzma" 2>&1`
+                LIBLZMA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "liblzma" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBLZMA_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBLZMA_PKG_ERRORS" >&5
 
 
   save_CFLAGS=$CFLAGS
@@ -16869,9 +17660,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char lzma_easy_encoder ();
+char lzma_easy_encoder (void);
 int
-main ()
+main (void)
 {
 return lzma_easy_encoder ();
   ;
@@ -16917,7 +17708,7 @@ LIBS=$save_LIBS
 
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
   save_CFLAGS=$CFLAGS
@@ -16952,9 +17743,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char lzma_easy_encoder ();
+char lzma_easy_encoder (void);
 int
-main ()
+main (void)
 {
 return lzma_easy_encoder ();
   ;
@@ -17000,11 +17791,11 @@ LIBS=$save_LIBS
 
 
 else
-	LIBLZMA_CFLAGS=$pkg_cv_LIBLZMA_CFLAGS
-	LIBLZMA_LIBS=$pkg_cv_LIBLZMA_LIBS
+        LIBLZMA_CFLAGS=$pkg_cv_LIBLZMA_CFLAGS
+        LIBLZMA_LIBS=$pkg_cv_LIBLZMA_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	have_liblzma=yes
+        have_liblzma=yes
 fi
 
 
@@ -17018,9 +17809,15 @@ if ${ac_cv_func_hstrerror+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
 int
-main ()
+main (void)
 {
 void *x=hstrerror
   ;
@@ -17054,9 +17851,15 @@ if ${ac_cv_func_getservbyname+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
 int
-main ()
+main (void)
 {
 void *x=getservbyname
   ;
@@ -17090,9 +17893,15 @@ if ${ac_cv_func_getservbyport+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
 int
-main ()
+main (void)
 {
 void *x=getservbyport
   ;
@@ -17126,9 +17935,15 @@ if ${ac_cv_func_gethostbyname+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
 int
-main ()
+main (void)
 {
 void *x=gethostbyname
   ;
@@ -17162,9 +17977,15 @@ if ${ac_cv_func_gethostbyaddr+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
 int
-main ()
+main (void)
 {
 void *x=gethostbyaddr
   ;
@@ -17198,9 +18019,15 @@ if ${ac_cv_func_getprotobyname+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
 int
-main ()
+main (void)
 {
 void *x=getprotobyname
   ;
@@ -17227,6 +18054,90 @@ fi
 
 
 
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gethostname" >&5
+$as_echo_n "checking for gethostname... " >&6; }
+if ${ac_cv_func_gethostname+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
+int
+main (void)
+{
+void *x=gethostname
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_func_gethostname=yes
+else
+  ac_cv_func_gethostname=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_gethostname" >&5
+$as_echo "$ac_cv_func_gethostname" >&6; }
+  if test "x$ac_cv_func_gethostname" = xyes; then :
+
+$as_echo "#define HAVE_GETHOSTNAME 1" >>confdefs.h
+
+fi
+
+
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shutdown" >&5
+$as_echo_n "checking for shutdown... " >&6; }
+if ${ac_cv_func_shutdown+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef _WIN32
+  #include <winsock.h>
+#else
+  #include <netdb.h>
+#endif
+
+int
+main (void)
+{
+void *x=shutdown
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_func_shutdown=yes
+else
+  ac_cv_func_shutdown=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_shutdown" >&5
+$as_echo "$ac_cv_func_shutdown" >&6; }
+  if test "x$ac_cv_func_shutdown" = xyes; then :
+
+$as_echo "#define HAVE_SHUTDOWN 1" >>confdefs.h
+
+fi
+
+
+
+
+
 
 
 
@@ -17238,13 +18149,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=inet_aton
   ;
@@ -17279,13 +18194,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=inet_ntoa
   ;
@@ -17320,13 +18239,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=inet_pton
   ;
@@ -17361,13 +18284,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=getpeername
   ;
@@ -17402,13 +18329,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=getsockname
   ;
@@ -17443,13 +18374,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=accept
   ;
@@ -17484,13 +18419,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=bind
   ;
@@ -17525,13 +18464,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=connect
   ;
@@ -17566,13 +18509,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=listen
   ;
@@ -17607,13 +18554,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=recvfrom
   ;
@@ -17648,13 +18599,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=sendto
   ;
@@ -17689,13 +18644,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=setsockopt
   ;
@@ -17730,13 +18689,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 int
-main ()
+main (void)
 {
 void *x=socket
   ;
@@ -17779,7 +18742,7 @@ else
 #endif
 
 int
-main ()
+main (void)
 {
 void *x=setgroups
   ;
@@ -17832,9 +18795,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char openpty ();
+char openpty (void);
 int
-main ()
+main (void)
 {
 return openpty ();
   ;
@@ -17872,9 +18835,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char openpty ();
+char openpty (void);
 int
-main ()
+main (void)
 {
 return openpty ();
   ;
@@ -17919,9 +18882,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char login_tty ();
+char login_tty (void);
 int
-main ()
+main (void)
 {
 return login_tty ();
   ;
@@ -17988,9 +18951,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char forkpty ();
+char forkpty (void);
 int
-main ()
+main (void)
 {
 return forkpty ();
   ;
@@ -18028,9 +18991,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char forkpty ();
+char forkpty (void);
 int
-main ()
+main (void)
 {
 return forkpty ();
   ;
@@ -18100,7 +19063,7 @@ _ACEOF
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 getpgrp(0);
   ;
@@ -18128,7 +19091,7 @@ _ACEOF
 /* end confdefs.h.  */
 #include <unistd.h>
 int
-main ()
+main (void)
 {
 setpgrp(0,0);
   ;
@@ -18150,8 +19113,8 @@ done
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBCRYPT" >&5
-$as_echo_n "checking for LIBCRYPT... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libxcrypt >= 3.1.1" >&5
+$as_echo_n "checking for libxcrypt >= 3.1.1... " >&6; }
 
 if test -n "$LIBCRYPT_CFLAGS"; then
     pkg_cv_LIBCRYPT_CFLAGS="$LIBCRYPT_CFLAGS"
@@ -18191,7 +19154,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -18200,12 +19163,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBCRYPT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxcrypt >= 3.1.1" 2>&1`
+                LIBCRYPT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxcrypt >= 3.1.1" 2>&1`
         else
-	        LIBCRYPT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxcrypt >= 3.1.1" 2>&1`
+                LIBCRYPT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxcrypt >= 3.1.1" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBCRYPT_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBCRYPT_PKG_ERRORS" >&5
 
 
   save_CFLAGS=$CFLAGS
@@ -18229,9 +19192,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char crypt_r ();
+char crypt_r (void);
 int
-main ()
+main (void)
 {
 return crypt_r ();
   ;
@@ -18288,7 +19251,7 @@ LIBS=$save_LIBS
 
 
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
   save_CFLAGS=$CFLAGS
@@ -18312,9 +19275,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char crypt_r ();
+char crypt_r (void);
 int
-main ()
+main (void)
 {
 return crypt_r ();
   ;
@@ -18371,8 +19334,8 @@ LIBS=$save_LIBS
 
 
 else
-	LIBCRYPT_CFLAGS=$pkg_cv_LIBCRYPT_CFLAGS
-	LIBCRYPT_LIBS=$pkg_cv_LIBCRYPT_LIBS
+        LIBCRYPT_CFLAGS=$pkg_cv_LIBCRYPT_CFLAGS
+        LIBCRYPT_LIBS=$pkg_cv_LIBCRYPT_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -18404,7 +19367,7 @@ else
         #include <unistd.h>
 
 int
-main ()
+main (void)
 {
 
         #ifdef HAVE_CRYPT_R
@@ -18437,6 +19400,9 @@ LIBS=$save_LIBS
 
 
 
+case $host in
+  *-*-mingw*) ;;
+  *)
 for ac_func in clock_gettime
 do :
   ac_fn_c_check_func "$LINENO" "clock_gettime" "ac_cv_func_clock_gettime"
@@ -18463,9 +19429,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char clock_gettime ();
+char clock_gettime (void);
 int
-main ()
+main (void)
 {
 return clock_gettime ();
   ;
@@ -18525,9 +19491,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char clock_getres ();
+char clock_getres (void);
 int
-main ()
+main (void)
 {
 return clock_getres ();
   ;
@@ -18583,9 +19549,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char clock_settime ();
+char clock_settime (void);
 int
-main ()
+main (void)
 {
 return clock_settime ();
   ;
@@ -18614,6 +19580,8 @@ fi
 fi
 done
 
+  ;;
+esac
 
 for ac_func in clock_nanosleep
 do :
@@ -18641,9 +19609,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char clock_nanosleep ();
+char clock_nanosleep (void);
 int
-main ()
+main (void)
 {
 return clock_nanosleep ();
   ;
@@ -18699,9 +19667,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char nanosleep ();
+char nanosleep (void);
 int
-main ()
+main (void)
 {
 return nanosleep ();
   ;
@@ -18749,7 +19717,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #endif
 
 int
-main ()
+main (void)
 {
 
   makedev(major(0),minor(0));
@@ -18798,7 +19766,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #include <stdio.h>
 
 int
-main ()
+main (void)
 {
 getaddrinfo(NULL, NULL, NULL, NULL);
   ;
@@ -18945,7 +19913,7 @@ if test "$ac_cv_func_getaddrinfo" = no -o "$ac_cv_buggy_getaddrinfo" = yes
 then
   if test "x$ipv6" = xyes; then :
 
-    as_fn_error $? "You must get working getaddrinfo() function or pass the \"--disable-ipv6\" option to configure." "$LINENO" 5
+    as_fn_error $? " You must get working getaddrinfo() function or pass the \"--disable-ipv6\" option to configure." "$LINENO" 5
 
 fi
 else
@@ -18986,7 +19954,7 @@ else
 #include <time.h>
 
 int
-main ()
+main (void)
 {
 struct tm tm;
 				     int *p = &tm.tm_sec;
@@ -19053,7 +20021,7 @@ extern char *tzname[];
 #endif
 
 int
-main ()
+main (void)
 {
 return tzname[0][0];
   ;
@@ -19187,7 +20155,7 @@ else
 /* end confdefs.h.  */
 #include <time.h>
 int
-main ()
+main (void)
 {
 return altzone;
   ;
@@ -19210,6 +20178,18 @@ $as_echo "#define HAVE_ALTZONE 1" >>confdefs.h
 
 fi
 
+for ac_header in ws2tcpip.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "ws2tcpip.h" "ac_cv_header_ws2tcpip_h" "$ac_includes_default"
+if test "x$ac_cv_header_ws2tcpip_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_WS2TCPIP_H 1
+_ACEOF
+
+fi
+
+done
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for addrinfo" >&5
 $as_echo_n "checking for addrinfo... " >&6; }
 if ${ac_cv_struct_addrinfo+:} false; then :
@@ -19217,9 +20197,14 @@ if ${ac_cv_struct_addrinfo+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <netdb.h>
+
+#ifdef HAVE_WS2TCPIP_H
+#  include <ws2tcpip.h>
+#else
+#  include <netdb.h>
+#endif
 int
-main ()
+main (void)
 {
 struct addrinfo a
   ;
@@ -19249,10 +20234,17 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#		include <sys/types.h>
-#		include <sys/socket.h>
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 int
-main ()
+main (void)
 {
 struct sockaddr_storage s
   ;
@@ -19286,7 +20278,7 @@ else
 #		include <sys/socket.h>
 #		include <linux/if_alg.h>
 int
-main ()
+main (void)
 {
 struct sockaddr_alg s
   ;
@@ -19319,7 +20311,7 @@ else
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
 #ifndef __cplusplus
@@ -19402,7 +20394,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 signed char c;
   ;
@@ -19437,7 +20429,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 int foo(int x) { return 0; }
 int
-main ()
+main (void)
 {
 return foo(10);
   ;
@@ -19483,7 +20475,7 @@ int foo(int x, ...) {
 }
 
 int
-main ()
+main (void)
 {
 return foo(10, "", 3.14);
   ;
@@ -19524,7 +20516,7 @@ else
 #include <sys/socket.h>
 
 int
-main ()
+main (void)
 {
 void *x=socketpair
   ;
@@ -19562,7 +20554,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #include <sys/types.h>
 #include <sys/socket.h>
 int
-main ()
+main (void)
 {
 struct sockaddr x;
 x.sa_len = 0;
@@ -19606,7 +20598,7 @@ $as_echo_n "checking gethostbyname_r with 6 args... " >&6; }
 #   include <netdb.h>
 
 int
-main ()
+main (void)
 {
 
     char *name;
@@ -19643,7 +20635,7 @@ $as_echo_n "checking gethostbyname_r with 5 args... " >&6; }
 #       include <netdb.h>
 
 int
-main ()
+main (void)
 {
 
         char *name;
@@ -19680,7 +20672,7 @@ $as_echo_n "checking gethostbyname_r with 3 args... " >&6; }
 #           include <netdb.h>
 
 int
-main ()
+main (void)
 {
 
             char *name;
@@ -19764,9 +20756,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char __fpu_control ();
+char __fpu_control (void);
 int
-main ()
+main (void)
 {
 return __fpu_control ();
   ;
@@ -19864,7 +20856,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   __asm__ __volatile__ ("movq %rcx, %rax");
@@ -19993,7 +20985,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   unsigned short cw;
@@ -20033,7 +21025,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   unsigned int fpcr;
@@ -20150,6 +21142,9 @@ done
 
 LIBS=$LIBS_SAVE
 
+if test $with_nt_threads = yes ; then
+    ac_cv_posix_semaphores_enabled=no
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether POSIX semaphores are enabled" >&5
 $as_echo_n "checking whether POSIX semaphores are enabled... " >&6; }
 if ${ac_cv_posix_semaphores_enabled+:} false; then :
@@ -20202,6 +21197,9 @@ $as_echo "#define POSIX_SEMAPHORES_NOT_ENABLED 1" >>confdefs.h
 
 fi
 
+if test $with_nt_threads = yes ; then
+            ac_cv_broken_sem_getvalue=skip
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken sem_getvalue" >&5
 $as_echo_n "checking for broken sem_getvalue... " >&6; }
 if ${ac_cv_broken_sem_getvalue+:} false; then :
@@ -20258,7 +21256,9 @@ $as_echo "#define HAVE_BROKEN_SEM_GETVALUE 1" >>confdefs.h
 
 fi
 
-ac_fn_c_check_decl "$LINENO" "RTLD_LAZY" "ac_cv_have_decl_RTLD_LAZY" "#include <dlfcn.h>
+case $host in
+  *-*-mingw*) ;;
+  *) ac_fn_c_check_decl "$LINENO" "RTLD_LAZY" "ac_cv_have_decl_RTLD_LAZY" "#include <dlfcn.h>
 "
 if test "x$ac_cv_have_decl_RTLD_LAZY" = xyes; then :
   ac_have_decl=1
@@ -20346,7 +21346,8 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_RTLD_MEMBER $ac_have_decl
 _ACEOF
-
+;;
+esac
 
 # determine what size digit to use for Python's longs
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking digit size for Python's longs" >&5
@@ -20551,7 +21552,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 	     #include <sys/param.h>
 
 int
-main ()
+main (void)
 {
 #if ! (defined BYTE_ORDER && defined BIG_ENDIAN \
 		     && defined LITTLE_ENDIAN && BYTE_ORDER && BIG_ENDIAN \
@@ -20571,7 +21572,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 		#include <sys/param.h>
 
 int
-main ()
+main (void)
 {
 #if BYTE_ORDER != BIG_ENDIAN
 		 not big endian
@@ -20597,7 +21598,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 #include <limits.h>
 
 int
-main ()
+main (void)
 {
 #if ! (defined _LITTLE_ENDIAN || defined _BIG_ENDIAN)
 	      bogus endian macros
@@ -20614,7 +21615,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 #include <limits.h>
 
 int
-main ()
+main (void)
 {
 #ifndef _BIG_ENDIAN
 		 not big endian
@@ -20656,7 +21657,7 @@ short int ascii_mm[] =
 		extern int foo;
 
 int
-main ()
+main (void)
 {
 return use_ascii (foo) == use_ebcdic (foo);
   ;
@@ -20682,7 +21683,7 @@ else
 /* end confdefs.h.  */
 $ac_includes_default
 int
-main ()
+main (void)
 {
 
 	     /* Are we little or big endian?  From Harbison&Steele.  */
@@ -20728,6 +21729,84 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
  esac
 
 
+
+# Special case of PYD_PLATFORM_TAG with python build with mingw.
+# Python can with compiled with clang or gcc and linked
+# to msvcrt or ucrt. To avoid conflicts between them
+# we are selecting the extension as based on the compiler
+# and the runtime they link to
+#   gcc + x86_64 + msvcrt = cp{version number}-x86_64
+#   gcc + i686 + msvcrt = cp{version number}-i686
+#   gcc + x86_64 + ucrt = cp{version number}-x86_64-ucrt
+#   clang + x86_64 + ucrt = cp{version number}-x86_64-clang
+#   clang + i686 + ucrt = cp{version number}-i686-clang
+
+PYD_PLATFORM_TAG=""
+case $host in
+  *-*-mingw*)
+    # check if we are linking to ucrt
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether linking to ucrt" >&5
+$as_echo_n "checking whether linking to ucrt... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+    #include <stdio.h>
+    #ifndef _UCRT
+        #error no ucrt
+    #endif
+    int main(){ return 0; }
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  linking_to_ucrt=yes
+else
+  linking_to_ucrt=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $linking_to_ucrt" >&5
+$as_echo "$linking_to_ucrt" >&6; }
+    ;;
+esac
+case $host_os in
+    mingw*)
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking PYD_PLATFORM_TAG" >&5
+$as_echo_n "checking PYD_PLATFORM_TAG... " >&6; }
+  case $host in
+  i686-*-mingw*)
+    if test -n "${cc_is_clang}"; then
+      # it is CLANG32
+      PYD_PLATFORM_TAG="mingw_i686_clang"
+    else
+      if test $linking_to_ucrt = no; then
+        PYD_PLATFORM_TAG="mingw_i686"
+      else
+        PYD_PLATFORM_TAG="mingw_i686_ucrt"
+      fi
+    fi
+    ;;
+  x86_64-*-mingw*)
+    if test -n "${cc_is_clang}"; then
+      # it is CLANG64
+      PYD_PLATFORM_TAG="mingw_x86_64_clang"
+    else
+      if test $linking_to_ucrt = no; then
+        PYD_PLATFORM_TAG="mingw_x86_64"
+      else
+        PYD_PLATFORM_TAG="mingw_x86_64_ucrt"
+      fi
+    fi
+    ;;
+  aarch64-*-mingw*)
+    PYD_PLATFORM_TAG+="mingw_aarch64"
+    ;;
+  armv7-*-mingw*)
+    PYD_PLATFORM_TAG+="mingw_armv7"
+    ;;
+  esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYD_PLATFORM_TAG" >&5
+$as_echo "$PYD_PLATFORM_TAG" >&6; }
+esac
+
 # ABI version string for Python extension modules.  This appears between the
 # periods in shared library file names, e.g. foo.<SOABI>.so.  It is calculated
 # from the following attributes which affect the ABI of this Python build (in
@@ -20767,7 +21846,12 @@ _ACEOF
 fi
 
 
-EXT_SUFFIX=.${SOABI}${SHLIB_SUFFIX}
+VERSION_NO_DOTS=$(echo $LDVERSION | tr -d .)
+if test -n "${PYD_PLATFORM_TAG}"; then
+  EXT_SUFFIX=".cp${VERSION_NO_DOTS}-${PYD_PLATFORM_TAG}${SHLIB_SUFFIX}"
+else
+  EXT_SUFFIX=.${SOABI}${SHLIB_SUFFIX}
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking LDVERSION" >&5
 $as_echo_n "checking LDVERSION... " >&6; }
@@ -20777,7 +21861,7 @@ $as_echo "$LDVERSION" >&6; }
 
 # On Android and Cygwin the shared libraries must be linked with libpython.
 
-if test -n "$ANDROID_API_LEVEL" -o "$MACHDEP" = "cygwin"; then
+if test -n "$ANDROID_API_LEVEL" -o "$MACHDEP" = "cygwin" -o "$MACHDEP" = "win32"; then
   LIBPYTHON="-lpython${VERSION}${ABIFLAGS}"
 else
   LIBPYTHON=''
@@ -20900,7 +21984,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
 int
-main ()
+main (void)
 {
 
 	FILE *f = fopen("/dev/null", "r");
@@ -20980,9 +22064,9 @@ $as_echo_n "checking how to link readline libs... " >&6; }
 #ifdef __cplusplus
 extern "C"
 #endif
-char readline ();
+char readline (void);
 int
-main ()
+main (void)
 {
 return readline ();
   ;
@@ -21064,9 +22148,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl_pre_input_hook ();
+char rl_pre_input_hook (void);
 int
-main ()
+main (void)
 {
 return rl_pre_input_hook ();
   ;
@@ -21110,9 +22194,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl_completion_display_matches_hook ();
+char rl_completion_display_matches_hook (void);
 int
-main ()
+main (void)
 {
 return rl_completion_display_matches_hook ();
   ;
@@ -21156,9 +22240,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl_resize_terminal ();
+char rl_resize_terminal (void);
 int
-main ()
+main (void)
 {
 return rl_resize_terminal ();
   ;
@@ -21202,9 +22286,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl_completion_matches ();
+char rl_completion_matches (void);
 int
-main ()
+main (void)
 {
 return rl_completion_matches ();
   ;
@@ -21264,9 +22348,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char append_history ();
+char append_history (void);
 int
-main ()
+main (void)
 {
 return append_history ();
   ;
@@ -21494,7 +22578,7 @@ else
 /* end confdefs.h.  */
 #include <sys/stat.h>
 int
-main ()
+main (void)
 {
 
 struct stat st;
@@ -21530,7 +22614,7 @@ else
 /* end confdefs.h.  */
 #include <sys/stat.h>
 int
-main ()
+main (void)
 {
 
 struct stat st;
@@ -21556,11 +22640,16 @@ $as_echo "#define HAVE_STAT_TV_NSEC2 1" >>confdefs.h
 
 fi
 
+if test -n "$PKG_CONFIG"; then
+    NCURSESW_INCLUDEDIR="`"$PKG_CONFIG" ncursesw --cflags-only-I 2>/dev/null | sed -e 's/^-I//;s/ .*$//'`"
+else
+    NCURSESW_INCLUDEDIR=""
+fi
+
+
 # first curses header check
 ac_save_cppflags="$CPPFLAGS"
-if test "$cross_compiling" = no; then
-  CPPFLAGS="$CPPFLAGS -I/usr/include/ncursesw"
-fi
+CPPFLAGS="$CPPFLAGS -I$NCURSESW_INCLUDEDIR"
 
 for ac_header in curses.h ncurses.h
 do :
@@ -21605,7 +22694,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
   int rtn;
@@ -21648,7 +22737,7 @@ else
   #include <curses.h>
 
 int
-main ()
+main (void)
 {
 
   WINDOW *w;
@@ -21689,7 +22778,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef is_pad
@@ -21729,7 +22818,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef is_term_resized
@@ -21769,7 +22858,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef resize_term
@@ -21809,7 +22898,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef resizeterm
@@ -21849,7 +22938,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef immedok
@@ -21889,7 +22978,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef syncok
@@ -21929,7 +23018,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef wchgat
@@ -21969,7 +23058,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef filter
@@ -22009,7 +23098,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef has_key
@@ -22049,7 +23138,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef typeahead
@@ -22089,7 +23178,7 @@ else
 /* end confdefs.h.  */
 #include <curses.h>
 int
-main ()
+main (void)
 {
 
         #ifndef use_env
@@ -22261,6 +23350,9 @@ $as_echo "#define PY_FORMAT_SIZE_T \"z\"" >>confdefs.h
 fi
 
 ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -22409,6 +23501,20 @@ do
   THREADHEADERS="$THREADHEADERS \$(srcdir)/$h"
 done
 
+case $host in
+  *-*-mingw*)
+                        CPPFLAGS="-I\$(srcdir)/PC $CPPFLAGS -I."
+    ;;
+esac
+
+
+PYTHON_OBJS_FROZENMAIN="Python/frozenmain.o"
+case $host in
+  *-*-mingw*)
+        PYTHON_OBJS_FROZENMAIN=
+    ;;
+esac
+
 
 SRCDIRS="\
   Modules \
@@ -22430,6 +23536,10 @@ SRCDIRS="\
   Python \
   Python/frozen_modules \
   Python/deepfreeze"
+case $host in
+  *-*-mingw*) SRCDIRS="$SRCDIRS PC";;
+esac
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for build directories" >&5
 $as_echo_n "checking for build directories... " >&6; }
 for dir in $SRCDIRS; do
@@ -22439,6 +23549,81 @@ for dir in $SRCDIRS; do
 done
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
 $as_echo "done" >&6; }
+
+# For mingw build need additional library for linking
+case $host in
+  *-*-mingw*)
+    LIBS="$LIBS -lversion -lshlwapi -lpathcch -lbcrypt"
+    for ac_prog in gawk mawk nawk awk
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AWK+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AWK"; then
+  ac_cv_prog_AWK="$AWK" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AWK="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AWK=$ac_cv_prog_AWK
+if test -n "$AWK"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AWK" >&5
+$as_echo "$AWK" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$AWK" && break
+done
+
+    if test "$AWK" = "gawk"; then
+      awk_extra_flag="--non-decimal-data"
+    fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking FIELD3" >&5
+$as_echo_n "checking FIELD3... " >&6; }
+    FIELD3=$($AWK $awk_extra_flag '\
+      /^#define PY_RELEASE_LEVEL_/             {levels[$2]=$3}    \
+      /^#define PY_MICRO_VERSION[[:space:]]+/  {micro=$3}         \
+      /^#define PY_RELEASE_LEVEL[[:space:]]+/  {level=levels[$3]} \
+      /^#define PY_RELEASE_SERIAL[[:space:]]+/ {serial=$3}        \
+      END {print micro * 1000 + level * 10 + serial}' \
+      $srcdir/Include/patchlevel.h
+    )
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${FIELD3}" >&5
+$as_echo "${FIELD3}" >&6; }
+    RCFLAGS="$RCFLAGS -DFIELD3=$FIELD3 -O COFF"
+
+    case $host in
+      i686*)  RCFLAGS="$RCFLAGS --target=pe-i386" ;;
+      x86_64*)  RCFLAGS="$RCFLAGS --target=pe-x86-64" ;;
+      *) ;;
+    esac
+  ;;
+  *)
+  ;;
+esac
+
 
 # Availability of -O2:
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -O2" >&5
@@ -22453,7 +23638,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
-main ()
+main (void)
 {
 
   ;
@@ -22850,9 +24035,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char shm_open ();
+char shm_open (void);
 int
-main ()
+main (void)
 {
 return shm_open ();
   ;
@@ -23063,8 +24248,8 @@ fi
     if ! $found; then
         OPENSSL_INCLUDES=
         for ssldir in $ssldirs; do
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for openssl/ssl.h in $ssldir" >&5
-$as_echo_n "checking for openssl/ssl.h in $ssldir... " >&6; }
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for include/openssl/ssl.h in $ssldir" >&5
+$as_echo_n "checking for include/openssl/ssl.h in $ssldir... " >&6; }
             if test -f "$ssldir/include/openssl/ssl.h"; then
                 OPENSSL_INCLUDES="-I$ssldir/include"
                 OPENSSL_LDFLAGS="-L$ssldir/lib"
@@ -23101,7 +24286,7 @@ $as_echo_n "checking whether compiling and linking against OpenSSL works... " >&
 /* end confdefs.h.  */
 #include <openssl/ssl.h>
 int
-main ()
+main (void)
 {
 SSL_new(NULL)
   ;
@@ -23252,7 +24437,7 @@ else
       static void keylog_cb(const SSL *ssl, const char *line) {}
 
 int
-main ()
+main (void)
 {
 
       SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
@@ -23312,7 +24497,7 @@ else
       #endif
 
 int
-main ()
+main (void)
 {
 
       OBJ_nid2sn(NID_md5);
@@ -23445,8 +24630,8 @@ if test "x$with_builtin_blake2" = xyes; then :
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBB2" >&5
-$as_echo_n "checking for LIBB2... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libb2" >&5
+$as_echo_n "checking for libb2... " >&6; }
 
 if test -n "$LIBB2_CFLAGS"; then
     pkg_cv_LIBB2_CFLAGS="$LIBB2_CFLAGS"
@@ -23486,7 +24671,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23495,21 +24680,21 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBB2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libb2" 2>&1`
+                LIBB2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libb2" 2>&1`
         else
-	        LIBB2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libb2" 2>&1`
+                LIBB2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libb2" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBB2_PKG_ERRORS" >&5
+        # Put the nasty error message in config.log where it belongs
+        echo "$LIBB2_PKG_ERRORS" >&5
 
-	have_libb2=no
+        have_libb2=no
 elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	have_libb2=no
+        have_libb2=no
 else
-	LIBB2_CFLAGS=$pkg_cv_LIBB2_CFLAGS
-	LIBB2_LIBS=$pkg_cv_LIBB2_LIBS
+        LIBB2_CFLAGS=$pkg_cv_LIBB2_CFLAGS
+        LIBB2_LIBS=$pkg_cv_LIBB2_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -23928,26 +25113,6 @@ fi
 fi
 
 
-        if test "$py_cv_module__posixsubprocess" != "n/a"; then :
-  py_cv_module__posixsubprocess=yes
-fi
-   if test "$py_cv_module__posixsubprocess" = yes; then
-  MODULE__POSIXSUBPROCESS_TRUE=
-  MODULE__POSIXSUBPROCESS_FALSE='#'
-else
-  MODULE__POSIXSUBPROCESS_TRUE='#'
-  MODULE__POSIXSUBPROCESS_FALSE=
-fi
-
-  as_fn_append MODULE_BLOCK "MODULE__POSIXSUBPROCESS_STATE=$py_cv_module__posixsubprocess$as_nl"
-  if test "x$py_cv_module__posixsubprocess" = xyes; then :
-
-
-
-
-fi
-
-
         if test "$py_cv_module__queue" != "n/a"; then :
   py_cv_module__queue=yes
 fi
@@ -24094,7 +25259,7 @@ $as_echo_n "checking for stdlib extension module _multiprocessing... " >&6; }
         if test "$py_cv_module__multiprocessing" != "n/a"; then :
 
     if true; then :
-  if test "$ac_cv_func_sem_unlink" = "yes"; then :
+  if test "$ac_cv_func_sem_unlink" = "yes" -o "$MACHDEP" = "win32"; then :
   py_cv_module__multiprocessing=yes
 else
   py_cv_module__multiprocessing=missing
@@ -24299,7 +25464,7 @@ $as_echo_n "checking for stdlib extension module mmap... " >&6; }
         if test "$py_cv_module_mmap" != "n/a"; then :
 
     if true; then :
-  if test "$ac_cv_header_sys_mman_h" = "yes" -a "$ac_cv_header_sys_stat_h" = "yes"; then :
+  if test "$ac_cv_header_sys_mman_h" = "yes"                     -a "$ac_cv_header_sys_stat_h" = "yes"                     -o "$MACHDEP" = "win32"; then :
   py_cv_module_mmap=yes
 else
   py_cv_module_mmap=missing
@@ -24333,7 +25498,7 @@ $as_echo_n "checking for stdlib extension module _socket... " >&6; }
         if test "$py_cv_module__socket" != "n/a"; then :
 
     if true; then :
-  if test "$ac_cv_header_sys_socket_h" = "yes"                     -a "$ac_cv_header_sys_types_h" = "yes"                     -a "$ac_cv_header_netinet_in_h" = "yes"; then :
+  if test "$ac_cv_header_sys_socket_h" = "yes"                     -a "$ac_cv_header_sys_types_h" = "yes"                     -a "$ac_cv_header_netinet_in_h" = "yes"                     -o "$MACHDEP" = "win32"; then :
   py_cv_module__socket=yes
 else
   py_cv_module__socket=missing
@@ -24347,7 +25512,7 @@ fi
   if test "x$py_cv_module__socket" = xyes; then :
 
 
-
+    as_fn_append MODULE_BLOCK "MODULE__SOCKET_LDFLAGS=$SOCKET_LIBS$as_nl"
 
 fi
    if test "$py_cv_module__socket" = yes; then
@@ -24633,6 +25798,40 @@ fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module_termios" >&5
 $as_echo "$py_cv_module_termios" >&6; }
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdlib extension module _posixsubprocess" >&5
+$as_echo_n "checking for stdlib extension module _posixsubprocess... " >&6; }
+        if test "$py_cv_module__posixsubprocess" != "n/a"; then :
+
+    if true; then :
+  if test "$MACHDEP" != "win32"; then :
+  py_cv_module__posixsubprocess=yes
+else
+  py_cv_module__posixsubprocess=missing
+fi
+else
+  py_cv_module__posixsubprocess=disabled
+fi
+
+fi
+  as_fn_append MODULE_BLOCK "MODULE__POSIXSUBPROCESS_STATE=$py_cv_module__posixsubprocess$as_nl"
+  if test "x$py_cv_module__posixsubprocess" = xyes; then :
+
+
+
+
+fi
+   if test "$py_cv_module__posixsubprocess" = yes; then
+  MODULE__POSIXSUBPROCESS_TRUE=
+  MODULE__POSIXSUBPROCESS_FALSE='#'
+else
+  MODULE__POSIXSUBPROCESS_TRUE='#'
+  MODULE__POSIXSUBPROCESS_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module__posixsubprocess" >&5
+$as_echo "$py_cv_module__posixsubprocess" >&6; }
 
 
 
@@ -25451,7 +26650,7 @@ fi
   if test "x$py_cv_module__ssl" = xyes; then :
 
     as_fn_append MODULE_BLOCK "MODULE__SSL_CFLAGS=$OPENSSL_INCLUDES$as_nl"
-    as_fn_append MODULE_BLOCK "MODULE__SSL_LDFLAGS=$OPENSSL_LDFLAGS $OPENSSL_LDFLAGS_RPATH $OPENSSL_LIBS$as_nl"
+    as_fn_append MODULE_BLOCK "MODULE__SSL_LDFLAGS=$OPENSSL_LDFLAGS $OPENSSL_LDFLAGS_RPATH $OPENSSL_LIBS -lws2_32$as_nl"
 
 fi
    if test "$py_cv_module__ssl" = yes; then
@@ -25498,6 +26697,177 @@ fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module__hashlib" >&5
 $as_echo "$py_cv_module__hashlib" >&6; }
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdlib extension module msvcrt" >&5
+$as_echo_n "checking for stdlib extension module msvcrt... " >&6; }
+        if test "$py_cv_module_msvcrt" != "n/a"; then :
+
+    if test "$MACHDEP" = "win32"; then :
+  if true; then :
+  py_cv_module_msvcrt=yes
+else
+  py_cv_module_msvcrt=missing
+fi
+else
+  py_cv_module_msvcrt=disabled
+fi
+
+fi
+  as_fn_append MODULE_BLOCK "MODULE_MSVCRT_STATE=$py_cv_module_msvcrt$as_nl"
+  if test "x$py_cv_module_msvcrt" = xyes; then :
+
+
+
+
+fi
+   if test "$py_cv_module_msvcrt" = yes; then
+  MODULE_MSVCRT_TRUE=
+  MODULE_MSVCRT_FALSE='#'
+else
+  MODULE_MSVCRT_TRUE='#'
+  MODULE_MSVCRT_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module_msvcrt" >&5
+$as_echo "$py_cv_module_msvcrt" >&6; }
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdlib extension module _winapi" >&5
+$as_echo_n "checking for stdlib extension module _winapi... " >&6; }
+        if test "$py_cv_module__winapi" != "n/a"; then :
+
+    if test "$MACHDEP" = "win32"; then :
+  if true; then :
+  py_cv_module__winapi=yes
+else
+  py_cv_module__winapi=missing
+fi
+else
+  py_cv_module__winapi=disabled
+fi
+
+fi
+  as_fn_append MODULE_BLOCK "MODULE__WINAPI_STATE=$py_cv_module__winapi$as_nl"
+  if test "x$py_cv_module__winapi" = xyes; then :
+
+
+
+
+fi
+   if test "$py_cv_module__winapi" = yes; then
+  MODULE__WINAPI_TRUE=
+  MODULE__WINAPI_FALSE='#'
+else
+  MODULE__WINAPI_TRUE='#'
+  MODULE__WINAPI_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module__winapi" >&5
+$as_echo "$py_cv_module__winapi" >&6; }
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdlib extension module _msi" >&5
+$as_echo_n "checking for stdlib extension module _msi... " >&6; }
+        if test "$py_cv_module__msi" != "n/a"; then :
+
+    if test "$MACHDEP" = "win32"; then :
+  if true; then :
+  py_cv_module__msi=yes
+else
+  py_cv_module__msi=missing
+fi
+else
+  py_cv_module__msi=disabled
+fi
+
+fi
+  as_fn_append MODULE_BLOCK "MODULE__MSI_STATE=$py_cv_module__msi$as_nl"
+  if test "x$py_cv_module__msi" = xyes; then :
+
+
+    as_fn_append MODULE_BLOCK "MODULE__MSI_LDFLAGS=-lmsi -lcabinet -lrpcrt4$as_nl"
+
+fi
+   if test "$py_cv_module__msi" = yes; then
+  MODULE__MSI_TRUE=
+  MODULE__MSI_FALSE='#'
+else
+  MODULE__MSI_TRUE='#'
+  MODULE__MSI_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module__msi" >&5
+$as_echo "$py_cv_module__msi" >&6; }
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdlib extension module winsound" >&5
+$as_echo_n "checking for stdlib extension module winsound... " >&6; }
+        if test "$py_cv_module_winsound" != "n/a"; then :
+
+    if test "$MACHDEP" = "win32"; then :
+  if true; then :
+  py_cv_module_winsound=yes
+else
+  py_cv_module_winsound=missing
+fi
+else
+  py_cv_module_winsound=disabled
+fi
+
+fi
+  as_fn_append MODULE_BLOCK "MODULE_WINSOUND_STATE=$py_cv_module_winsound$as_nl"
+  if test "x$py_cv_module_winsound" = xyes; then :
+
+
+    as_fn_append MODULE_BLOCK "MODULE_WINSOUND_LDFLAGS=-lwinmm$as_nl"
+
+fi
+   if test "$py_cv_module_winsound" = yes; then
+  MODULE_WINSOUND_TRUE=
+  MODULE_WINSOUND_FALSE='#'
+else
+  MODULE_WINSOUND_TRUE='#'
+  MODULE_WINSOUND_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module_winsound" >&5
+$as_echo "$py_cv_module_winsound" >&6; }
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdlib extension module _overlapped" >&5
+$as_echo_n "checking for stdlib extension module _overlapped... " >&6; }
+        if test "$py_cv_module__overlapped" != "n/a"; then :
+
+    if test "$MACHDEP" = "win32"; then :
+  if true; then :
+  py_cv_module__overlapped=yes
+else
+  py_cv_module__overlapped=missing
+fi
+else
+  py_cv_module__overlapped=disabled
+fi
+
+fi
+  as_fn_append MODULE_BLOCK "MODULE__OVERLAPPED_STATE=$py_cv_module__overlapped$as_nl"
+  if test "x$py_cv_module__overlapped" = xyes; then :
+
+
+    as_fn_append MODULE_BLOCK "MODULE__OVERLAPPED_LDFLAGS=-lws2_32$as_nl"
+
+fi
+   if test "$py_cv_module__overlapped" = yes; then
+  MODULE__OVERLAPPED_TRUE=
+  MODULE__OVERLAPPED_FALSE='#'
+else
+  MODULE__OVERLAPPED_TRUE='#'
+  MODULE__OVERLAPPED_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $py_cv_module__overlapped" >&5
+$as_echo "$py_cv_module__overlapped" >&6; }
 
 
 
@@ -25587,7 +26957,7 @@ fi
   as_fn_append MODULE_BLOCK "MODULE__TESTINTERNALCAPI_STATE=$py_cv_module__testinternalcapi$as_nl"
   if test "x$py_cv_module__testinternalcapi" = xyes; then :
 
-
+    as_fn_append MODULE_BLOCK "MODULE__TESTINTERNALCAPI_CFLAGS=-DPY3_DLLNAME="\"$DLLLIBRARY\""$as_nl"
 
 
 fi
@@ -25642,7 +27012,7 @@ $as_echo_n "checking for stdlib extension module _testimportmultiple... " >&6; }
         if test "$py_cv_module__testimportmultiple" != "n/a"; then :
 
     if test "$TEST_MODULES" = yes; then :
-  if test "$ac_cv_func_dlopen" = yes; then :
+  if test "$have_dynamic_loading" = yes; then :
   py_cv_module__testimportmultiple=yes
 else
   py_cv_module__testimportmultiple=missing
@@ -25676,7 +27046,7 @@ $as_echo_n "checking for stdlib extension module _testmultiphase... " >&6; }
         if test "$py_cv_module__testmultiphase" != "n/a"; then :
 
     if test "$TEST_MODULES" = yes; then :
-  if test "$ac_cv_func_dlopen" = yes; then :
+  if test "$have_dynamic_loading" = yes; then :
   py_cv_module__testmultiphase=yes
 else
   py_cv_module__testmultiphase=missing
@@ -25744,7 +27114,7 @@ $as_echo_n "checking for stdlib extension module _ctypes_test... " >&6; }
         if test "$py_cv_module__ctypes_test" != "n/a"; then :
 
     if test "$TEST_MODULES" = yes; then :
-  if test "$ac_cv_func_dlopen" = yes; then :
+  if test "$have_dynamic_loading" = yes; then :
   py_cv_module__ctypes_test=yes
 else
   py_cv_module__ctypes_test=missing
@@ -25779,7 +27149,7 @@ $as_echo_n "checking for stdlib extension module xxlimited... " >&6; }
         if test "$py_cv_module_xxlimited" != "n/a"; then :
 
     if test "$with_trace_refs" = "no"; then :
-  if test "$ac_cv_func_dlopen" = yes; then :
+  if test "$have_dynamic_loading" = yes; then :
   py_cv_module_xxlimited=yes
 else
   py_cv_module_xxlimited=missing
@@ -25813,7 +27183,7 @@ $as_echo_n "checking for stdlib extension module xxlimited_35... " >&6; }
         if test "$py_cv_module_xxlimited_35" != "n/a"; then :
 
     if test "$with_trace_refs" = "no"; then :
-  if test "$ac_cv_func_dlopen" = yes; then :
+  if test "$have_dynamic_loading" = yes; then :
   py_cv_module_xxlimited_35=yes
 else
   py_cv_module_xxlimited_35=missing
@@ -26010,10 +27380,6 @@ if test -z "${MODULE__PICKLE_TRUE}" && test -z "${MODULE__PICKLE_FALSE}"; then
   as_fn_error $? "conditional \"MODULE__PICKLE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${MODULE__POSIXSUBPROCESS_TRUE}" && test -z "${MODULE__POSIXSUBPROCESS_FALSE}"; then
-  as_fn_error $? "conditional \"MODULE__POSIXSUBPROCESS\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${MODULE__QUEUE_TRUE}" && test -z "${MODULE__QUEUE_FALSE}"; then
   as_fn_error $? "conditional \"MODULE__QUEUE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -26112,6 +27478,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MODULE_TERMIOS_TRUE}" && test -z "${MODULE_TERMIOS_FALSE}"; then
   as_fn_error $? "conditional \"MODULE_TERMIOS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE__POSIXSUBPROCESS_TRUE}" && test -z "${MODULE__POSIXSUBPROCESS_FALSE}"; then
+  as_fn_error $? "conditional \"MODULE__POSIXSUBPROCESS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MODULE_PYEXPAT_TRUE}" && test -z "${MODULE_PYEXPAT_FALSE}"; then
@@ -26228,6 +27598,26 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MODULE__HASHLIB_TRUE}" && test -z "${MODULE__HASHLIB_FALSE}"; then
   as_fn_error $? "conditional \"MODULE__HASHLIB\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE_MSVCRT_TRUE}" && test -z "${MODULE_MSVCRT_FALSE}"; then
+  as_fn_error $? "conditional \"MODULE_MSVCRT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE__WINAPI_TRUE}" && test -z "${MODULE__WINAPI_FALSE}"; then
+  as_fn_error $? "conditional \"MODULE__WINAPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE__MSI_TRUE}" && test -z "${MODULE__MSI_FALSE}"; then
+  as_fn_error $? "conditional \"MODULE__MSI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE_WINSOUND_TRUE}" && test -z "${MODULE_WINSOUND_FALSE}"; then
+  as_fn_error $? "conditional \"MODULE_WINSOUND\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE__OVERLAPPED_TRUE}" && test -z "${MODULE__OVERLAPPED_FALSE}"; then
+  as_fn_error $? "conditional \"MODULE__OVERLAPPED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MODULE__TESTCAPI_TRUE}" && test -z "${MODULE__TESTCAPI_FALSE}"; then
@@ -26741,6 +28131,7 @@ ac_pwd='$ac_pwd'
 srcdir='$srcdir'
 INSTALL='$INSTALL'
 MKDIR_P='$MKDIR_P'
+AWK='$AWK'
 test -n "\$AWK" || AWK=awk
 _ACEOF
 
