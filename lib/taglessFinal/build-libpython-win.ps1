@@ -22,4 +22,4 @@ C:\msys64\usr\bin\bash -lc 'which gcc' #ensure gcc is found
 C:\msys64\usr\bin\bash -lc 'cd cpython-mingw && ./configure --prefix=/mingw64 --host=x86_64-w64-mingw32 \
 --build=x86_64-w64-mingw32 --enable-shared --with-system-expat --with-system-ffi --with-system-libmpdec \
  --without-ensurepip --enable-loadable-sqlite-extensions --with-tzpath=/mingw64/share/zoneinfo --enable-optimizations \
-  && make -j8 libpython3.11.a && cp libpython3.11.a ../libpython.a && cp pyconfig.h ../pyconfig.h'
+  && make -j8 libpython3.11.a'
