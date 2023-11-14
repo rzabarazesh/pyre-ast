@@ -1,5 +1,5 @@
 import netrc, os, unittest, sys, textwrap
-from test.support import os_helper
+from test.support import os_helper, run_unittest
 
 try:
     import pwd
@@ -308,6 +308,8 @@ class NetrcTestCase(unittest.TestCase):
             self.assertEqual(nrc.hosts['foo.domain.com'],
                              ('anonymous', '', 'pass'))
 
+def test_main():
+    run_unittest(NetrcTestCase)
 
 if __name__ == "__main__":
-    unittest.main()
+    test_main()

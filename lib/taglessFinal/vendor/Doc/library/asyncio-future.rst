@@ -276,4 +276,4 @@ the Future has a result::
      :func:`concurrent.futures.as_completed` functions.
 
    - :meth:`asyncio.Future.cancel` accepts an optional ``msg`` argument,
-     but :meth:`concurrent.futures.Future.cancel` does not.
+     but :func:`concurrent.futures.cancel` does not.

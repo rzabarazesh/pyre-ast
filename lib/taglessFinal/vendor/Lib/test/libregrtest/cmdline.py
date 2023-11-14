@@ -107,8 +107,6 @@ resources to test.  Currently only the following are defined:
 
     cpu -       Used for certain CPU-heavy tests.
 
-    walltime -  Long running but not CPU-bound tests.
-
     subprocess  Run all tests for the subprocess module.
 
     urlfetch -  It is okay to download files required on testing.
@@ -131,7 +129,7 @@ Pattern examples:
 
 
 ALL_RESOURCES = ('audio', 'curses', 'largefile', 'network',
-                 'decimal', 'cpu', 'subprocess', 'urlfetch', 'gui', 'walltime')
+                 'decimal', 'cpu', 'subprocess', 'urlfetch', 'gui')
 
 # Other resources excluded from --use=all:
 #
@@ -158,7 +156,7 @@ class Namespace(argparse.Namespace):
         self.coverdir = 'coverage'
         self.runleaks = False
         self.huntrleaks = False
-        self.rerun = False
+        self.verbose2 = False
         self.verbose3 = False
         self.print_slow = False
         self.random_seed = None
@@ -215,10 +213,8 @@ def _create_parser():
     group = parser.add_argument_group('Verbosity')
     group.add_argument('-v', '--verbose', action='count',
                        help='run tests in verbose mode with output to stdout')
-    group.add_argument('-w', '--rerun', action='store_true',
+    group.add_argument('-w', '--verbose2', action='store_true',
                        help='re-run failed tests in verbose mode')
-    group.add_argument('--verbose2', action='store_true', dest='rerun',
-                       help='deprecated alias to --rerun')
     group.add_argument('-W', '--verbose3', action='store_true',
                        help='display test output on failure')
     group.add_argument('-q', '--quiet', action='store_true',
@@ -313,9 +309,6 @@ def _create_parser():
     group.add_argument('--fail-env-changed', action='store_true',
                        help='if a test file alters the environment, mark '
                             'the test as failed')
-    group.add_argument('--fail-rerun', action='store_true',
-                       help='if a test failed and then passed when re-run, '
-                            'mark the tests as failed')
 
     group.add_argument('--junit-xml', dest='xmlpath', metavar='FILENAME',
                        help='writes JUnit-style XML results to the specified '
@@ -387,7 +380,7 @@ def _parse_args(args, **kwargs):
         ns.python = shlex.split(ns.python)
     if ns.failfast and not (ns.verbose or ns.verbose3):
         parser.error("-G/--failfast needs either -v or -W")
-    if ns.pgo and (ns.verbose or ns.rerun or ns.verbose3):
+    if ns.pgo and (ns.verbose or ns.verbose2 or ns.verbose3):
         parser.error("--pgo/-v don't go together!")
     if ns.pgo_extended:
         ns.pgo = True  # pgo_extended implies pgo

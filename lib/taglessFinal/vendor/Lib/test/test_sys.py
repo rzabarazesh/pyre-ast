@@ -269,29 +269,20 @@ class SysModuleTest(unittest.TestCase):
         finally:
             sys.setswitchinterval(orig)
 
-    def test_getrecursionlimit(self):
-        limit = sys.getrecursionlimit()
-        self.assertIsInstance(limit, int)
-        self.assertGreater(limit, 1)
-
+    def test_recursionlimit(self):
         self.assertRaises(TypeError, sys.getrecursionlimit, 42)
-
-    def test_setrecursionlimit(self):
-        old_limit = sys.getrecursionlimit()
-        try:
-            sys.setrecursionlimit(10_005)
-            self.assertEqual(sys.getrecursionlimit(), 10_005)
-
-            self.assertRaises(TypeError, sys.setrecursionlimit)
-            self.assertRaises(ValueError, sys.setrecursionlimit, -42)
-        finally:
-            sys.setrecursionlimit(old_limit)
+        oldlimit = sys.getrecursionlimit()
+        self.assertRaises(TypeError, sys.setrecursionlimit)
+        self.assertRaises(ValueError, sys.setrecursionlimit, -42)
+        sys.setrecursionlimit(10000)
+        self.assertEqual(sys.getrecursionlimit(), 10000)
+        sys.setrecursionlimit(oldlimit)
 
     def test_recursionlimit_recovery(self):
         if hasattr(sys, 'gettrace') and sys.gettrace():
             self.skipTest('fatal error if run with a trace function')
 
-        old_limit = sys.getrecursionlimit()
+        oldlimit = sys.getrecursionlimit()
         def f():
             f()
         try:
@@ -310,31 +301,35 @@ class SysModuleTest(unittest.TestCase):
                 with self.assertRaises(RecursionError):
                     f()
         finally:
-            sys.setrecursionlimit(old_limit)
+            sys.setrecursionlimit(oldlimit)
 
     @test.support.cpython_only
-    def test_setrecursionlimit_to_depth(self):
+    def test_setrecursionlimit_recursion_depth(self):
         # Issue #25274: Setting a low recursion limit must be blocked if the
         # current recursion depth is already higher than limit.
 
-        old_limit = sys.getrecursionlimit()
-        try:
-            depth = support.get_recursion_depth()
-            with self.subTest(limit=sys.getrecursionlimit(), depth=depth):
-                # depth + 1 is OK
-                sys.setrecursionlimit(depth + 1)
+        from _testinternalcapi import get_recursion_depth
 
-                # reset the limit to be able to call self.assertRaises()
-                # context manager
-                sys.setrecursionlimit(old_limit)
+        def set_recursion_limit_at_depth(depth, limit):
+            recursion_depth = get_recursion_depth()
+            if recursion_depth >= depth:
                 with self.assertRaises(RecursionError) as cm:
-                    sys.setrecursionlimit(depth)
-            self.assertRegex(str(cm.exception),
-                             "cannot set the recursion limit to [0-9]+ "
-                             "at the recursion depth [0-9]+: "
-                             "the limit is too low")
+                    sys.setrecursionlimit(limit)
+                self.assertRegex(str(cm.exception),
+                                 "cannot set the recursion limit to [0-9]+ "
+                                 "at the recursion depth [0-9]+: "
+                                 "the limit is too low")
+            else:
+                set_recursion_limit_at_depth(depth, limit)
+
+        oldlimit = sys.getrecursionlimit()
+        try:
+            sys.setrecursionlimit(1000)
+
+            for limit in (10, 25, 50, 75, 100, 150, 200):
+                set_recursion_limit_at_depth(limit, limit)
         finally:
-            sys.setrecursionlimit(old_limit)
+            sys.setrecursionlimit(oldlimit)
 
     def test_getwindowsversion(self):
         # Raise SkipTest if sys doesn't have getwindowsversion attribute
@@ -390,8 +385,7 @@ class SysModuleTest(unittest.TestCase):
         self.assertRaises(TypeError, sys.getrefcount)
         c = sys.getrefcount(None)
         n = None
-        # Singleton refcnts don't change
-        self.assertEqual(sys.getrefcount(None), c)
+        self.assertEqual(sys.getrefcount(None), c+1)
         del n
         self.assertEqual(sys.getrefcount(None), c)
         if hasattr(sys, "gettotalrefcount"):
@@ -404,26 +398,6 @@ class SysModuleTest(unittest.TestCase):
             SysModuleTest.test_getframe.__code__ \
             is sys._getframe().f_code
         )
-
-    def test_getframemodulename(self):
-        # Default depth gets ourselves
-        self.assertEqual(__name__, sys._getframemodulename())
-        self.assertEqual("unittest.case", sys._getframemodulename(1))
-        i = 0
-        f = sys._getframe(i)
-        while f:
-            self.assertEqual(
-                f.f_globals['__name__'],
-                sys._getframemodulename(i) or '__main__'
-            )
-            i += 1
-            f2 = f.f_back
-            try:
-                f = sys._getframe(i)
-            except ValueError:
-                break
-            self.assertIs(f, f2)
-        self.assertIsNone(sys._getframemodulename(i))
 
     # sys._current_frames() is a CPython-only gimmick.
     @threading_helper.reap_threads
@@ -451,47 +425,46 @@ class SysModuleTest(unittest.TestCase):
         t.start()
         entered_g.wait()
 
-        try:
-            # At this point, t has finished its entered_g.set(), although it's
-            # impossible to guess whether it's still on that line or has moved on
-            # to its leave_g.wait().
-            self.assertEqual(len(thread_info), 1)
-            thread_id = thread_info[0]
+        # At this point, t has finished its entered_g.set(), although it's
+        # impossible to guess whether it's still on that line or has moved on
+        # to its leave_g.wait().
+        self.assertEqual(len(thread_info), 1)
+        thread_id = thread_info[0]
 
-            d = sys._current_frames()
-            for tid in d:
-                self.assertIsInstance(tid, int)
-                self.assertGreater(tid, 0)
+        d = sys._current_frames()
+        for tid in d:
+            self.assertIsInstance(tid, int)
+            self.assertGreater(tid, 0)
 
-            main_id = threading.get_ident()
-            self.assertIn(main_id, d)
-            self.assertIn(thread_id, d)
+        main_id = threading.get_ident()
+        self.assertIn(main_id, d)
+        self.assertIn(thread_id, d)
 
-            # Verify that the captured main-thread frame is _this_ frame.
-            frame = d.pop(main_id)
-            self.assertTrue(frame is sys._getframe())
+        # Verify that the captured main-thread frame is _this_ frame.
+        frame = d.pop(main_id)
+        self.assertTrue(frame is sys._getframe())
 
-            # Verify that the captured thread frame is blocked in g456, called
-            # from f123.  This is a little tricky, since various bits of
-            # threading.py are also in the thread's call stack.
-            frame = d.pop(thread_id)
-            stack = traceback.extract_stack(frame)
-            for i, (filename, lineno, funcname, sourceline) in enumerate(stack):
-                if funcname == "f123":
-                    break
-            else:
-                self.fail("didn't find f123() on thread's call stack")
+        # Verify that the captured thread frame is blocked in g456, called
+        # from f123.  This is a little tricky, since various bits of
+        # threading.py are also in the thread's call stack.
+        frame = d.pop(thread_id)
+        stack = traceback.extract_stack(frame)
+        for i, (filename, lineno, funcname, sourceline) in enumerate(stack):
+            if funcname == "f123":
+                break
+        else:
+            self.fail("didn't find f123() on thread's call stack")
 
-            self.assertEqual(sourceline, "g456()")
+        self.assertEqual(sourceline, "g456()")
 
-            # And the next record must be for g456().
-            filename, lineno, funcname, sourceline = stack[i+1]
-            self.assertEqual(funcname, "g456")
-            self.assertIn(sourceline, ["leave_g.wait()", "entered_g.set()"])
-        finally:
-            # Reap the spawned thread.
-            leave_g.set()
-            t.join()
+        # And the next record must be for g456().
+        filename, lineno, funcname, sourceline = stack[i+1]
+        self.assertEqual(funcname, "g456")
+        self.assertIn(sourceline, ["leave_g.wait()", "entered_g.set()"])
+
+        # Reap the spawned thread.
+        leave_g.set()
+        t.join()
 
     @threading_helper.reap_threads
     @threading_helper.requires_working_threading()
@@ -523,44 +496,43 @@ class SysModuleTest(unittest.TestCase):
         t.start()
         entered_g.wait()
 
-        try:
-            # At this point, t has finished its entered_g.set(), although it's
-            # impossible to guess whether it's still on that line or has moved on
-            # to its leave_g.wait().
-            self.assertEqual(len(thread_info), 1)
-            thread_id = thread_info[0]
+        # At this point, t has finished its entered_g.set(), although it's
+        # impossible to guess whether it's still on that line or has moved on
+        # to its leave_g.wait().
+        self.assertEqual(len(thread_info), 1)
+        thread_id = thread_info[0]
 
-            d = sys._current_exceptions()
-            for tid in d:
-                self.assertIsInstance(tid, int)
-                self.assertGreater(tid, 0)
+        d = sys._current_exceptions()
+        for tid in d:
+            self.assertIsInstance(tid, int)
+            self.assertGreater(tid, 0)
 
-            main_id = threading.get_ident()
-            self.assertIn(main_id, d)
-            self.assertIn(thread_id, d)
-            self.assertEqual(None, d.pop(main_id))
+        main_id = threading.get_ident()
+        self.assertIn(main_id, d)
+        self.assertIn(thread_id, d)
+        self.assertEqual((None, None, None), d.pop(main_id))
 
-            # Verify that the captured thread frame is blocked in g456, called
-            # from f123.  This is a little tricky, since various bits of
-            # threading.py are also in the thread's call stack.
-            exc_value = d.pop(thread_id)
-            stack = traceback.extract_stack(exc_value.__traceback__.tb_frame)
-            for i, (filename, lineno, funcname, sourceline) in enumerate(stack):
-                if funcname == "f123":
-                    break
-            else:
-                self.fail("didn't find f123() on thread's call stack")
+        # Verify that the captured thread frame is blocked in g456, called
+        # from f123.  This is a little tricky, since various bits of
+        # threading.py are also in the thread's call stack.
+        exc_type, exc_value, exc_tb = d.pop(thread_id)
+        stack = traceback.extract_stack(exc_tb.tb_frame)
+        for i, (filename, lineno, funcname, sourceline) in enumerate(stack):
+            if funcname == "f123":
+                break
+        else:
+            self.fail("didn't find f123() on thread's call stack")
 
-            self.assertEqual(sourceline, "g456()")
+        self.assertEqual(sourceline, "g456()")
 
-            # And the next record must be for g456().
-            filename, lineno, funcname, sourceline = stack[i+1]
-            self.assertEqual(funcname, "g456")
-            self.assertTrue(sourceline.startswith("if leave_g.wait("))
-        finally:
-            # Reap the spawned thread.
-            leave_g.set()
-            t.join()
+        # And the next record must be for g456().
+        filename, lineno, funcname, sourceline = stack[i+1]
+        self.assertEqual(funcname, "g456")
+        self.assertTrue(sourceline.startswith("if leave_g.wait("))
+
+        # Reap the spawned thread.
+        leave_g.set()
+        t.join()
 
     def test_attributes(self):
         self.assertIsInstance(sys.api_version, int)
@@ -1329,7 +1301,7 @@ class SizeofTest(unittest.TestCase):
             def __sizeof__(self):
                 return int(self)
         self.assertEqual(sys.getsizeof(OverflowSizeof(sys.maxsize)),
-                         sys.maxsize + self.gc_headsize*2)
+                         sys.maxsize + self.gc_headsize)
         with self.assertRaises(OverflowError):
             sys.getsizeof(OverflowSizeof(sys.maxsize + 1))
         with self.assertRaises(ValueError):
@@ -1350,7 +1322,6 @@ class SizeofTest(unittest.TestCase):
         check = self.check_sizeof
         # bool
         check(True, vsize('') + self.longdigit)
-        check(False, vsize('') + self.longdigit)
         # buffer
         # XXX
         # builtin_function_or_method
@@ -1454,7 +1425,7 @@ class SizeofTest(unittest.TestCase):
         check(x, size('3Pi3c7P2ic??2P'))
         # function
         def func(): pass
-        check(func, size('15Pi'))
+        check(func, size('14Pi'))
         class c():
             @staticmethod
             def foo():
@@ -1468,7 +1439,7 @@ class SizeofTest(unittest.TestCase):
             check(bar, size('PP'))
         # generator
         def get_gen(): yield 1
-        check(get_gen(), size('PP4P4c7P2ic??2P'))
+        check(get_gen(), size('P2P4P4c7P2ic??P'))
         # iterator
         check(iter('abc'), size('lP'))
         # callable-iterator
@@ -1488,7 +1459,7 @@ class SizeofTest(unittest.TestCase):
         # listreverseiterator (list)
         check(reversed([]), size('nP'))
         # int
-        check(0, vsize('') + self.longdigit)
+        check(0, vsize(''))
         check(1, vsize('') + self.longdigit)
         check(-1, vsize('') + self.longdigit)
         PyLong_BASE = 2**sys.int_info.bits_per_digit
@@ -1513,8 +1484,7 @@ class SizeofTest(unittest.TestCase):
         # PyCapsule
         # XXX
         # rangeiterator
-        check(iter(range(1)), size('3l'))
-        check(iter(range(2**65)), size('3P'))
+        check(iter(range(1)), size('4l'))
         # reverse
         check(reversed(''), size('nP'))
         # range
@@ -1551,7 +1521,7 @@ class SizeofTest(unittest.TestCase):
         check((1,2,3), vsize('') + 3*self.P)
         # type
         # static type: PyTypeObject
-        fmt = 'P2nPI13Pl4Pn9Pn12PIPc'
+        fmt = 'P2nPI13Pl4Pn9Pn12PIP'
         s = vsize('2P' + fmt)
         check(int, s)
         # class
@@ -1562,7 +1532,7 @@ class SizeofTest(unittest.TestCase):
                   '10P'                 # PySequenceMethods
                   '2P'                  # PyBufferProcs
                   '6P'
-                  '1PI'                 # Specializer cache
+                  '1P'                  # Specializer cache
                   )
         class newstyleclass(object): pass
         # Separate block for PyDictKeysObject with 8 keys and 5 entries
@@ -1584,8 +1554,8 @@ class SizeofTest(unittest.TestCase):
                    '\u0100'*40, '\uffff'*100,
                    '\U00010000'*30, '\U0010ffff'*100]
         # also update field definitions in test_unicode.test_raiseMemError
-        asciifields = "nnb"
-        compactfields = asciifields + "nP"
+        asciifields = "nnbP"
+        compactfields = asciifields + "nPn"
         unicodefields = compactfields + "P"
         for s in samples:
             maxchar = ord(max(s))
@@ -1655,8 +1625,8 @@ class SizeofTest(unittest.TestCase):
         check(_ast.AST(), size('P'))
         try:
             raise TypeError
-        except TypeError as e:
-            tb = e.__traceback__
+        except TypeError:
+            tb = sys.exc_info()[2]
             # traceback
             if tb is not None:
                 check(tb, size('2P2i'))

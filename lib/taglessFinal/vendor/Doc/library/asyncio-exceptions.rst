@@ -31,7 +31,7 @@ Exceptions
 
    .. versionchanged:: 3.8
 
-      :exc:`CancelledError` is now a subclass of :class:`BaseException` rather than :class:`Exception`.
+      :exc:`CancelledError` is now a subclass of :class:`BaseException`.
 
 
 .. exception:: InvalidStateError

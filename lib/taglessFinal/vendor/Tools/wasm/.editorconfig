@@ -1,5 +1,4 @@
-# This extends the root .editorconfig
-root = false
+root = false  # This extends the root .editorconfig
 
 [*.{html,js}]
 trim_trailing_whitespace = true

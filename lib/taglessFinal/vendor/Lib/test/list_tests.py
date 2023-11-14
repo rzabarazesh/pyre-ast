@@ -3,10 +3,11 @@ Tests common to list and UserList.UserList
 """
 
 import sys
+import os
 from functools import cmp_to_key
 
-from test import seq_tests
-from test.support import ALWAYS_EQ, NEVER_EQ, C_RECURSION_LIMIT
+from test import support, seq_tests
+from test.support import ALWAYS_EQ, NEVER_EQ
 
 
 class CommonTest(seq_tests.CommonTest):
@@ -61,7 +62,7 @@ class CommonTest(seq_tests.CommonTest):
 
     def test_repr_deep(self):
         a = self.type2test([])
-        for i in range(C_RECURSION_LIMIT + 1):
+        for i in range(sys.getrecursionlimit() + 100):
             a = self.type2test([a])
         self.assertRaises(RecursionError, repr, a)
 

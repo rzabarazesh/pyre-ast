@@ -389,17 +389,8 @@ def synopsis(filename, cache={}):
 class ErrorDuringImport(Exception):
     """Errors that occurred while trying to import something to document it."""
     def __init__(self, filename, exc_info):
-        if not isinstance(exc_info, tuple):
-            assert isinstance(exc_info, BaseException)
-            self.exc = type(exc_info)
-            self.value = exc_info
-            self.tb = exc_info.__traceback__
-        else:
-            warnings.warn("A tuple value for exc_info is deprecated, use an exception instance",
-                          DeprecationWarning)
-
-            self.exc, self.value, self.tb = exc_info
         self.filename = filename
+        self.exc, self.value, self.tb = exc_info
 
     def __str__(self):
         exc = self.exc.__name__
@@ -420,8 +411,8 @@ def importfile(path):
     spec = importlib.util.spec_from_file_location(name, path, loader=loader)
     try:
         return importlib._bootstrap._load(spec)
-    except BaseException as err:
-        raise ErrorDuringImport(path, err)
+    except:
+        raise ErrorDuringImport(path, sys.exc_info())
 
 def safeimport(path, forceload=0, cache={}):
     """Import a module; handle errors; return None if the module isn't found.
@@ -448,21 +439,25 @@ def safeimport(path, forceload=0, cache={}):
                     # Prevent garbage collection.
                     cache[key] = sys.modules[key]
                     del sys.modules[key]
-        module = importlib.import_module(path)
-    except BaseException as err:
+        module = __import__(path)
+    except:
         # Did the error occur before or after the module was found?
+        (exc, value, tb) = info = sys.exc_info()
         if path in sys.modules:
             # An error occurred while executing the imported module.
-            raise ErrorDuringImport(sys.modules[path].__file__, err)
-        elif type(err) is SyntaxError:
+            raise ErrorDuringImport(sys.modules[path].__file__, info)
+        elif exc is SyntaxError:
             # A SyntaxError occurred before we could execute the module.
-            raise ErrorDuringImport(err.filename, err)
-        elif isinstance(err, ImportError) and err.name == path:
+            raise ErrorDuringImport(value.filename, info)
+        elif issubclass(exc, ImportError) and value.name == path:
             # No such module in the path.
             return None
         else:
             # Some other error occurred during the importing process.
-            raise ErrorDuringImport(path, err)
+            raise ErrorDuringImport(path, sys.exc_info())
+    for part in path.split('.')[1:]:
+        try: module = getattr(module, part)
+        except AttributeError: return None
     return module
 
 # ---------------------------------------------------- formatter base class
@@ -509,7 +504,7 @@ class Doc:
 
         basedir = os.path.normcase(basedir)
         if (isinstance(object, type(os)) and
-            (object.__name__ in ('errno', 'exceptions', 'gc',
+            (object.__name__ in ('errno', 'exceptions', 'gc', 'imp',
                                  'marshal', 'posix', 'signal', 'sys',
                                  '_thread', 'zipimport') or
              (file.startswith(basedir) and
@@ -691,7 +686,9 @@ class HTMLDoc(Doc):
                                 r'RFC[- ]?(\d+)|'
                                 r'PEP[- ]?(\d+)|'
                                 r'(self\.)?(\w+))')
-        while match := pattern.search(text, here):
+        while True:
+            match = pattern.search(text, here)
+            if not match: break
             start, end = match.span()
             results.append(escape(text[here:start]))
 
@@ -726,7 +723,7 @@ class HTMLDoc(Doc):
         """Produce HTML for a class tree as given by inspect.getclasstree()."""
         result = ''
         for entry in tree:
-            if isinstance(entry, tuple):
+            if type(entry) is type(()):
                 c, bases = entry
                 result = result + '<dt class="heading-text">'
                 result = result + self.classlink(c, modname)
@@ -736,7 +733,7 @@ class HTMLDoc(Doc):
                         parents.append(self.classlink(base, modname))
                     result = result + '(' + ', '.join(parents) + ')'
                 result = result + '\n</dt>'
-            elif isinstance(entry, list):
+            elif type(entry) is type([]):
                 result = result + '<dd>\n%s</dd>\n' % self.formattree(
                     entry, modname, c)
         return '<dl>\n%s</dl>\n' % result
@@ -1174,7 +1171,8 @@ class TextDoc(Doc):
     def indent(self, text, prefix='    '):
         """Indent text by prepending a given prefix to each line."""
         if not text: return ''
-        lines = [(prefix + line).rstrip() for line in text.split('\n')]
+        lines = [prefix + line for line in text.split('\n')]
+        if lines: lines[-1] = lines[-1].rstrip()
         return '\n'.join(lines)
 
     def section(self, title, contents):
@@ -1188,14 +1186,14 @@ class TextDoc(Doc):
         """Render in text a class tree as returned by inspect.getclasstree()."""
         result = ''
         for entry in tree:
-            if isinstance(entry, tuple):
+            if type(entry) is type(()):
                 c, bases = entry
                 result = result + prefix + classname(c, modname)
                 if bases and bases != (parent,):
                     parents = (classname(c, modname) for c in bases)
                     result = result + '(%s)' % ', '.join(parents)
                 result = result + '\n'
-            elif isinstance(entry, list):
+            elif type(entry) is type([]):
                 result = result + self.formattree(
                     entry, modname, c, prefix + '    ')
         return result
@@ -1780,21 +1778,12 @@ def render_doc(thing, title='Python Library Documentation: %s', forceload=0,
     return title % desc + '\n\n' + renderer.document(object, name)
 
 def doc(thing, title='Python Library Documentation: %s', forceload=0,
-        output=None, is_cli=False):
+        output=None):
     """Display text documentation, given an object or a path to an object."""
     if output is None:
-        try:
-            pager(render_doc(thing, title, forceload))
-        except ImportError as exc:
-            if is_cli:
-                raise
-            print(exc)
+        pager(render_doc(thing, title, forceload))
     else:
-        try:
-            s = render_doc(thing, title, forceload, plaintext)
-        except ImportError as exc:
-            s = str(exc)
-        output.write(s)
+        output.write(render_doc(thing, title, forceload, plaintext))
 
 def writedoc(thing, forceload=0):
     """Write HTML documentation to a file in the current directory."""
@@ -2009,10 +1998,7 @@ class Helper:
     _GoInteractive = object()
     def __call__(self, request=_GoInteractive):
         if request is not self._GoInteractive:
-            try:
-                self.help(request)
-            except ImportError as err:
-                self.output.write(f'{err}\n')
+            self.help(request)
         else:
             self.intro()
             self.interact()
@@ -2053,8 +2039,8 @@ has the same effect as typing a particular string at the help> prompt.
             self.output.flush()
             return self.input.readline()
 
-    def help(self, request, is_cli=False):
-        if isinstance(request, str):
+    def help(self, request):
+        if type(request) is type(''):
             request = request.strip()
             if request == 'keywords': self.listkeywords()
             elif request == 'symbols': self.listsymbols()
@@ -2065,13 +2051,13 @@ has the same effect as typing a particular string at the help> prompt.
             elif request in self.symbols: self.showsymbol(request)
             elif request in ['True', 'False', 'None']:
                 # special case these keywords since they are objects too
-                doc(eval(request), 'Help on %s:', is_cli=is_cli)
+                doc(eval(request), 'Help on %s:')
             elif request in self.keywords: self.showtopic(request)
             elif request in self.topics: self.showtopic(request)
-            elif request: doc(request, 'Help on %s:', output=self._output, is_cli=is_cli)
-            else: doc(str, 'Help on %s:', output=self._output, is_cli=is_cli)
+            elif request: doc(request, 'Help on %s:', output=self._output)
+            else: doc(str, 'Help on %s:', output=self._output)
         elif isinstance(request, Helper): self()
-        else: doc(request, 'Help on %s:', output=self._output, is_cli=is_cli)
+        else: doc(request, 'Help on %s:', output=self._output)
         self.output.write('\n')
 
     def intro(self):
@@ -2139,7 +2125,7 @@ module "pydoc_data.topics" could not be found.
         if not target:
             self.output.write('no documentation found for %s\n' % repr(topic))
             return
-        if isinstance(target, str):
+        if type(target) is type(''):
             return self.showtopic(target, more_xrefs)
 
         label, xrefs = target
@@ -2248,7 +2234,7 @@ class ModuleScanner:
                 callback(None, modname, '')
             else:
                 try:
-                    spec = importer.find_spec(modname)
+                    spec = pkgutil._get_spec(importer, modname)
                 except SyntaxError:
                     # raised by tests for bad coding cookies or BOM
                     continue
@@ -2419,8 +2405,8 @@ def _start_server(urlhandler, hostname, port):
                 docsvr = DocServer(self.host, self.port, self.ready)
                 self.docserver = docsvr
                 docsvr.serve_until_quit()
-            except Exception as err:
-                self.error = err
+            except Exception as e:
+                self.error = e
 
         def ready(self, server):
             self.serving = True
@@ -2809,7 +2795,7 @@ def cli():
                     else:
                         writedoc(arg)
                 else:
-                    help.help(arg, is_cli=True)
+                    help.help(arg)
             except (ImportError, ErrorDuringImport) as value:
                 print(value)
                 sys.exit(1)

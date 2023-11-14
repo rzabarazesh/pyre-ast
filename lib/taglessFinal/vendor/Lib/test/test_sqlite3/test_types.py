@@ -106,9 +106,9 @@ class SqliteTypeTests(unittest.TestCase):
     @unittest.skipUnless(sys.maxsize > 2**32, 'requires 64bit platform')
     @support.bigmemtest(size=2**31, memuse=4, dry_run=False)
     def test_too_large_string(self, maxsize):
-        with self.assertRaises(sqlite.DataError):
+        with self.assertRaises(sqlite.InterfaceError):
             self.cur.execute("insert into test(s) values (?)", ('x'*(2**31-1),))
-        with self.assertRaises(sqlite.DataError):
+        with self.assertRaises(OverflowError):
             self.cur.execute("insert into test(s) values (?)", ('x'*(2**31),))
         self.cur.execute("select 1 from test")
         row = self.cur.fetchone()
@@ -117,9 +117,9 @@ class SqliteTypeTests(unittest.TestCase):
     @unittest.skipUnless(sys.maxsize > 2**32, 'requires 64bit platform')
     @support.bigmemtest(size=2**31, memuse=3, dry_run=False)
     def test_too_large_blob(self, maxsize):
-        with self.assertRaises(sqlite.DataError):
+        with self.assertRaises(sqlite.InterfaceError):
             self.cur.execute("insert into test(s) values (?)", (b'x'*(2**31-1),))
-        with self.assertRaises(sqlite.DataError):
+        with self.assertRaises(OverflowError):
             self.cur.execute("insert into test(s) values (?)", (b'x'*(2**31),))
         self.cur.execute("select 1 from test")
         row = self.cur.fetchone()
@@ -496,51 +496,38 @@ class DateTimeTests(unittest.TestCase):
 
     def test_sqlite_date(self):
         d = sqlite.Date(2004, 2, 14)
-        with self.assertWarnsRegex(DeprecationWarning, "adapter") as cm:
-            self.cur.execute("insert into test(d) values (?)", (d,))
-        self.assertEqual(cm.filename, __file__)
+        self.cur.execute("insert into test(d) values (?)", (d,))
         self.cur.execute("select d from test")
-        with self.assertWarnsRegex(DeprecationWarning, "converter") as cm:
-            d2 = self.cur.fetchone()[0]
-        self.assertEqual(cm.filename, __file__)
+        d2 = self.cur.fetchone()[0]
         self.assertEqual(d, d2)
 
     def test_sqlite_timestamp(self):
         ts = sqlite.Timestamp(2004, 2, 14, 7, 15, 0)
-        with self.assertWarnsRegex(DeprecationWarning, "adapter") as cm:
-            self.cur.execute("insert into test(ts) values (?)", (ts,))
-        self.assertEqual(cm.filename, __file__)
+        self.cur.execute("insert into test(ts) values (?)", (ts,))
         self.cur.execute("select ts from test")
-        with self.assertWarnsRegex(DeprecationWarning, "converter") as cm:
-            ts2 = self.cur.fetchone()[0]
-        self.assertEqual(cm.filename, __file__)
+        ts2 = self.cur.fetchone()[0]
         self.assertEqual(ts, ts2)
 
     def test_sql_timestamp(self):
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = datetime.datetime.utcnow()
         self.cur.execute("insert into test(ts) values (current_timestamp)")
         self.cur.execute("select ts from test")
-        with self.assertWarnsRegex(DeprecationWarning, "converter"):
-            ts = self.cur.fetchone()[0]
+        ts = self.cur.fetchone()[0]
         self.assertEqual(type(ts), datetime.datetime)
         self.assertEqual(ts.year, now.year)
 
     def test_date_time_sub_seconds(self):
         ts = sqlite.Timestamp(2004, 2, 14, 7, 15, 0, 500000)
-        with self.assertWarnsRegex(DeprecationWarning, "adapter"):
-            self.cur.execute("insert into test(ts) values (?)", (ts,))
+        self.cur.execute("insert into test(ts) values (?)", (ts,))
         self.cur.execute("select ts from test")
-        with self.assertWarnsRegex(DeprecationWarning, "converter"):
-            ts2 = self.cur.fetchone()[0]
+        ts2 = self.cur.fetchone()[0]
         self.assertEqual(ts, ts2)
 
     def test_date_time_sub_seconds_floating_point(self):
         ts = sqlite.Timestamp(2004, 2, 14, 7, 15, 0, 510241)
-        with self.assertWarnsRegex(DeprecationWarning, "adapter"):
-            self.cur.execute("insert into test(ts) values (?)", (ts,))
+        self.cur.execute("insert into test(ts) values (?)", (ts,))
         self.cur.execute("select ts from test")
-        with self.assertWarnsRegex(DeprecationWarning, "converter"):
-            ts2 = self.cur.fetchone()[0]
+        ts2 = self.cur.fetchone()[0]
         self.assertEqual(ts, ts2)
 
 

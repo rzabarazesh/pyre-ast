@@ -7,8 +7,6 @@
 
 .. versionadded:: 3.4
 
-**Source code:** :source:`Lib/ensurepip`
-
 --------------
 
 The :mod:`ensurepip` package provides support for bootstrapping the ``pip``
@@ -61,7 +59,7 @@ By default, ``pip`` is installed into the current virtual environment
 active virtual environment). The installation location can be controlled
 through two additional command line options:
 
-* :samp:`--root {dir}`: Installs ``pip`` relative to the given root directory
+* ``--root <dir>``: Installs ``pip`` relative to the given root directory
   rather than the root of the currently active virtual environment (if any)
   or the default root for the current Python installation.
 * ``--user``: Installs ``pip`` into the user site packages directory rather

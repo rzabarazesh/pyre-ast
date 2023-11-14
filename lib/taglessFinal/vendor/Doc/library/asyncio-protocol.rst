@@ -156,8 +156,7 @@ Base Transport
    will be received.  After all buffered data is flushed, the
    protocol's :meth:`protocol.connection_lost()
    <BaseProtocol.connection_lost>` method will be called with
-   :const:`None` as its argument. The transport should not be
-   used once it is closed.
+   :const:`None` as its argument.
 
 .. method:: BaseTransport.is_closing()
 

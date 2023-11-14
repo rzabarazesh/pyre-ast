@@ -458,7 +458,8 @@ nis_maps (PyObject *module, PyObject *args, PyObject *kwdict)
         if (!str || PyList_Append(list, str) < 0)
         {
             Py_XDECREF(str);
-            Py_SETREF(list, NULL);
+            Py_DECREF(list);
+            list = NULL;
             break;
         }
         Py_DECREF(str);
@@ -502,9 +503,6 @@ nis_exec(PyObject *module)
 
 static PyModuleDef_Slot nis_slots[] = {
     {Py_mod_exec, nis_exec},
-    // XXX gh-103092: fix isolation.
-    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
-    //{Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
     {0, NULL}
 };
 

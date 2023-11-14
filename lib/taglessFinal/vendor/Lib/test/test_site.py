@@ -10,9 +10,10 @@ from test import support
 from test.support import os_helper
 from test.support import socket_helper
 from test.support import captured_stderr
-from test.support.os_helper import TESTFN, EnvironmentVarGuard
+from test.support.os_helper import TESTFN, EnvironmentVarGuard, change_cwd
 import ast
 import builtins
+import encodings
 import glob
 import io
 import os
@@ -465,10 +466,10 @@ class ImportSideEffectTests(unittest.TestCase):
             else:
                 self.fail("sitecustomize not imported automatically")
 
-    @unittest.skipUnless(hasattr(urllib.request, "HTTPSHandler"),
-                         'need SSL support to download license')
     @test.support.requires_resource('network')
     @test.support.system_must_validate_cert
+    @unittest.skipUnless(hasattr(urllib.request, "HTTPSHandler"),
+                         'need SSL support to download license')
     def test_license_exists_at_url(self):
         # This test is a bit fragile since it depends on the format of the
         # string displayed by license in the absence of a LICENSE file.
@@ -576,7 +577,7 @@ class _pthFileTests(unittest.TestCase):
                 _pth_file = os.path.splitext(exe_file)[0] + '._pth'
             else:
                 _pth_file = os.path.splitext(dll_file)[0] + '._pth'
-            with open(_pth_file, 'w', encoding='utf8') as f:
+            with open(_pth_file, 'w') as f:
                 for line in lines:
                     print(line, file=f)
             return exe_file
@@ -613,7 +614,7 @@ class _pthFileTests(unittest.TestCase):
             os.path.dirname(exe_file),
             pth_lines)
 
-        output = subprocess.check_output([exe_file, '-X', 'utf8', '-c',
+        output = subprocess.check_output([exe_file, '-c',
             'import sys; print("\\n".join(sys.path) if sys.flags.no_site else "")'
         ], encoding='utf-8', errors='surrogateescape')
         actual_sys_path = output.rstrip().split('\n')

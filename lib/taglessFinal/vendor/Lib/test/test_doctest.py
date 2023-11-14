@@ -4,6 +4,7 @@ Test script for doctest.
 
 from test import support
 from test.support import import_helper
+from test.support import os_helper
 import doctest
 import functools
 import os
@@ -13,6 +14,7 @@ import importlib.abc
 import importlib.util
 import unittest
 import tempfile
+import shutil
 import types
 import contextlib
 
@@ -459,7 +461,7 @@ We'll simulate a __file__ attr that ends in pyc:
     >>> tests = finder.find(sample_func)
 
     >>> print(tests)  # doctest: +ELLIPSIS
-    [<DocTest sample_func from test_doctest.py:32 (1 example)>]
+    [<DocTest sample_func from test_doctest.py:34 (1 example)>]
 
 The exact name depends on how test_doctest was invoked, so allow for
 leading path components.
@@ -707,7 +709,7 @@ plain ol' Python and is guaranteed to be available.
 
     >>> import builtins
     >>> tests = doctest.DocTestFinder().find(builtins)
-    >>> 830 < len(tests) < 860 # approximate number of objects with docstrings
+    >>> 825 < len(tests) < 845 # approximate number of objects with docstrings
     True
     >>> real_tests = [t for t in tests if len(t.examples) > 0]
     >>> len(real_tests) # objects that actually have doctests
@@ -740,13 +742,15 @@ class TestDocTestFinder(unittest.TestCase):
 
     def test_issue35753(self):
         # This import of `call` should trigger issue35753 when
-        # DocTestFinder.find() is called due to inspect.unwrap() failing,
+        # `support.run_doctest` is called due to unwrap failing,
         # however with a patched doctest this should succeed.
         from unittest.mock import call
         dummy_module = types.ModuleType("dummy")
         dummy_module.__dict__['inject_call'] = call
-        finder = doctest.DocTestFinder()
-        self.assertEqual(finder.find(dummy_module), [])
+        try:
+            support.run_doctest(dummy_module, verbosity=True)
+        except ValueError as e:
+            raise support.TestFailed("Doctest unwrap failed") from e
 
     def test_empty_namespace_package(self):
         pkg_name = 'doctest_empty_pkg'
@@ -2807,8 +2811,6 @@ in it, and use a package hook to install a custom loader; on any platform,
 at least one of the line endings will raise a ValueError for inconsistent
 whitespace if doctest does not correctly do the newline conversion.
 
-    >>> from test.support import os_helper
-    >>> import shutil
     >>> dn = tempfile.mkdtemp()
     >>> pkg = os.path.join(dn, "doctest_testpkg")
     >>> os.mkdir(pkg)

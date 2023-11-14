@@ -41,7 +41,7 @@ Importing Modules
 
 .. c:function:: PyObject* PyImport_ImportModuleEx(const char *name, PyObject *globals, PyObject *locals, PyObject *fromlist)
 
-   .. index:: pair: built-in function; __import__
+   .. index:: builtin: __import__
 
    Import a module.  This is best described by referring to the built-in Python
    function :func:`__import__`.
@@ -120,25 +120,25 @@ Importing Modules
 
 .. c:function:: PyObject* PyImport_ExecCodeModule(const char *name, PyObject *co)
 
-   .. index:: pair: built-in function; compile
+   .. index:: builtin: compile
 
    Given a module name (possibly of the form ``package.module``) and a code object
    read from a Python bytecode file or obtained from the built-in function
    :func:`compile`, load the module.  Return a new reference to the module object,
    or ``NULL`` with an exception set if an error occurred.  *name*
-   is removed from :data:`sys.modules` in error cases, even if *name* was already
-   in :data:`sys.modules` on entry to :c:func:`PyImport_ExecCodeModule`.  Leaving
-   incompletely initialized modules in :data:`sys.modules` is dangerous, as imports of
+   is removed from :attr:`sys.modules` in error cases, even if *name* was already
+   in :attr:`sys.modules` on entry to :c:func:`PyImport_ExecCodeModule`.  Leaving
+   incompletely initialized modules in :attr:`sys.modules` is dangerous, as imports of
    such modules have no way to know that the module object is an unknown (and
    probably damaged with respect to the module author's intents) state.
 
    The module's :attr:`__spec__` and :attr:`__loader__` will be set, if
    not set already, with the appropriate values.  The spec's loader will
    be set to the module's ``__loader__`` (if set) and to an instance of
-   :class:`~importlib.machinery.SourceFileLoader` otherwise.
+   :class:`SourceFileLoader` otherwise.
 
    The module's :attr:`__file__` attribute will be set to the code object's
-   :attr:`!co_filename`.  If applicable, :attr:`__cached__` will also
+   :c:member:`co_filename`.  If applicable, :attr:`__cached__` will also
    be set.
 
    This function will reload the module if it was already imported.  See
@@ -149,11 +149,6 @@ Importing Modules
 
    See also :c:func:`PyImport_ExecCodeModuleEx` and
    :c:func:`PyImport_ExecCodeModuleWithPathnames`.
-
-   .. versionchanged:: 3.12
-      The setting of :attr:`__cached__` and :attr:`__loader__` is
-      deprecated. See :class:`~importlib.machinery.ModuleSpec` for
-      alternatives.
 
 
 .. c:function:: PyObject* PyImport_ExecCodeModuleEx(const char *name, PyObject *co, const char *pathname)
@@ -172,10 +167,6 @@ Importing Modules
 
    .. versionadded:: 3.3
 
-   .. versionchanged:: 3.12
-      Setting :attr:`__cached__` is deprecated. See
-      :class:`~importlib.machinery.ModuleSpec` for alternatives.
-
 
 .. c:function:: PyObject* PyImport_ExecCodeModuleWithPathnames(const char *name, PyObject *co, const char *pathname, const char *cpathname)
 
@@ -186,10 +177,8 @@ Importing Modules
 
    .. versionadded:: 3.2
    .. versionchanged:: 3.3
-      Uses :func:`!imp.source_from_cache()` in calculating the source path if
+      Uses :func:`imp.source_from_cache()` in calculating the source path if
       only the bytecode path is provided.
-   .. versionchanged:: 3.12
-      No longer uses the removed :mod:`!imp` module.
 
 
 .. c:function:: long PyImport_GetMagicNumber()
@@ -225,7 +214,7 @@ Importing Modules
 
 .. c:function:: PyObject* PyImport_GetImporter(PyObject *path)
 
-   Return a finder object for a :data:`sys.path`/:attr:`!pkg.__path__` item
+   Return a finder object for a :data:`sys.path`/:attr:`pkg.__path__` item
    *path*, possibly by fetching it from the :data:`sys.path_importer_cache`
    dict.  If it wasn't yet cached, traverse :data:`sys.path_hooks` until a hook
    is found that can handle the path item.  Return ``None`` if no hook could;
@@ -294,25 +283,23 @@ Importing Modules
 
 .. c:struct:: _inittab
 
-   Structure describing a single entry in the list of built-in modules.
-   Programs which
+   Structure describing a single entry in the list of built-in modules.  Each of
+   these structures gives the name and initialization function for a module built
+   into the interpreter.  The name is an ASCII encoded string.  Programs which
    embed Python may use an array of these structures in conjunction with
    :c:func:`PyImport_ExtendInittab` to provide additional built-in modules.
-   The structure consists of two members:
+   The structure is defined in :file:`Include/import.h` as::
 
-   .. c:member:: const char *name
-
-      The module name, as an ASCII encoded string.
-
-   .. c: member:: PyObject* (*initfunc)(void)
-
-      Initialization function for a module built into the interpreter.
+      struct _inittab {
+          const char *name;           /* ASCII encoded string */
+          PyObject* (*initfunc)(void);
+      };
 
 
 .. c:function:: int PyImport_ExtendInittab(struct _inittab *newtab)
 
    Add a collection of modules to the table of built-in modules.  The *newtab*
-   array must end with a sentinel entry which contains ``NULL`` for the :c:member:`~_inittab.name`
+   array must end with a sentinel entry which contains ``NULL`` for the :attr:`name`
    field; failure to provide the sentinel value can result in a memory fault.
    Returns ``0`` on success or ``-1`` if insufficient memory could be allocated to
    extend the internal table.  In the event of failure, no modules are added to the

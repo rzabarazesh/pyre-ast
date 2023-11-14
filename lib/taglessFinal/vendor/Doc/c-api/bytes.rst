@@ -8,7 +8,7 @@ Bytes Objects
 These functions raise :exc:`TypeError` when expecting a bytes parameter and
 called with a non-bytes parameter.
 
-.. index:: pair: object; bytes
+.. index:: object: bytes
 
 
 .. c:type:: PyBytesObject
@@ -58,45 +58,48 @@ called with a non-bytes parameter.
 
    .. % XXX: This should be exactly the same as the table in PyErr_Format.
    .. % One should just refer to the other.
+   .. % XXX: The descriptions for %zd and %zu are wrong, but the truth is complicated
+   .. % because not all compilers support the %z width modifier -- we fake it
+   .. % when necessary via interpolating PY_FORMAT_SIZE_T.
 
    .. tabularcolumns:: |l|l|L|
 
    +-------------------+---------------+--------------------------------+
    | Format Characters | Type          | Comment                        |
    +===================+===============+================================+
-   | ``%%``            | *n/a*         | The literal % character.       |
+   | :attr:`%%`        | *n/a*         | The literal % character.       |
    +-------------------+---------------+--------------------------------+
-   | ``%c``            | int           | A single byte,                 |
+   | :attr:`%c`        | int           | A single byte,                 |
    |                   |               | represented as a C int.        |
    +-------------------+---------------+--------------------------------+
-   | ``%d``            | int           | Equivalent to                  |
+   | :attr:`%d`        | int           | Equivalent to                  |
    |                   |               | ``printf("%d")``. [1]_         |
    +-------------------+---------------+--------------------------------+
-   | ``%u``            | unsigned int  | Equivalent to                  |
+   | :attr:`%u`        | unsigned int  | Equivalent to                  |
    |                   |               | ``printf("%u")``. [1]_         |
    +-------------------+---------------+--------------------------------+
-   | ``%ld``           | long          | Equivalent to                  |
+   | :attr:`%ld`       | long          | Equivalent to                  |
    |                   |               | ``printf("%ld")``. [1]_        |
    +-------------------+---------------+--------------------------------+
-   | ``%lu``           | unsigned long | Equivalent to                  |
+   | :attr:`%lu`       | unsigned long | Equivalent to                  |
    |                   |               | ``printf("%lu")``. [1]_        |
    +-------------------+---------------+--------------------------------+
-   | ``%zd``           | :c:type:`\    | Equivalent to                  |
+   | :attr:`%zd`       | :c:type:`\    | Equivalent to                  |
    |                   | Py_ssize_t`   | ``printf("%zd")``. [1]_        |
    +-------------------+---------------+--------------------------------+
-   | ``%zu``           | size_t        | Equivalent to                  |
+   | :attr:`%zu`       | size_t        | Equivalent to                  |
    |                   |               | ``printf("%zu")``. [1]_        |
    +-------------------+---------------+--------------------------------+
-   | ``%i``            | int           | Equivalent to                  |
+   | :attr:`%i`        | int           | Equivalent to                  |
    |                   |               | ``printf("%i")``. [1]_         |
    +-------------------+---------------+--------------------------------+
-   | ``%x``            | int           | Equivalent to                  |
+   | :attr:`%x`        | int           | Equivalent to                  |
    |                   |               | ``printf("%x")``. [1]_         |
    +-------------------+---------------+--------------------------------+
-   | ``%s``            | const char\*  | A null-terminated C character  |
+   | :attr:`%s`        | const char\*  | A null-terminated C character  |
    |                   |               | array.                         |
    +-------------------+---------------+--------------------------------+
-   | ``%p``            | const void\*  | The hex representation of a C  |
+   | :attr:`%p`        | const void\*  | The hex representation of a C  |
    |                   |               | pointer. Mostly equivalent to  |
    |                   |               | ``printf("%p")`` except that   |
    |                   |               | it is guaranteed to start with |
@@ -184,8 +187,8 @@ called with a non-bytes parameter.
 .. c:function:: void PyBytes_ConcatAndDel(PyObject **bytes, PyObject *newpart)
 
    Create a new bytes object in *\*bytes* containing the contents of *newpart*
-   appended to *bytes*.  This version releases the :term:`strong reference`
-   to *newpart* (i.e. decrements its reference count).
+   appended to *bytes*.  This version decrements the reference count of
+   *newpart*.
 
 
 .. c:function:: int _PyBytes_Resize(PyObject **bytes, Py_ssize_t newsize)

@@ -39,7 +39,7 @@ raised if the entry asked for cannot be found.
 
 .. note::
 
-   .. index:: pair: module; crypt
+   .. index:: module: crypt
 
    In traditional Unix the field ``pw_passwd`` usually contains a password
    encrypted with a DES derived algorithm (see module :mod:`crypt`).  However most

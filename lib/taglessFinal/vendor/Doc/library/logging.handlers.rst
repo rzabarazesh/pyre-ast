@@ -97,7 +97,7 @@ sends logging output to a disk file.  It inherits the output functionality from
 
    Returns a new instance of the :class:`FileHandler` class. The specified file is
    opened and used as the stream for logging. If *mode* is not specified,
-   ``'a'`` is used.  If *encoding* is not ``None``, it is used to open the file
+   :const:`'a'` is used.  If *encoding* is not ``None``, it is used to open the file
    with that encoding.  If *delay* is true, then file opening is deferred until the
    first call to :meth:`emit`. By default, the file grows indefinitely. If
    *errors* is specified, it's used to determine how encoding errors are handled.
@@ -182,7 +182,7 @@ for this value.
 
    Returns a new instance of the :class:`WatchedFileHandler` class. The specified
    file is opened and used as the stream for logging. If *mode* is not specified,
-   ``'a'`` is used.  If *encoding* is not ``None``, it is used to open the file
+   :const:`'a'` is used.  If *encoding* is not ``None``, it is used to open the file
    with that encoding.  If *delay* is true, then file opening is deferred until the
    first call to :meth:`emit`.  By default, the file grows indefinitely. If
    *errors* is provided, it determines how encoding errors are handled.
@@ -650,17 +650,6 @@ supports sending logging messages to a remote or local Unix syslog.
 
       Closes the socket to the remote host.
 
-   .. method:: createSocket()
-
-      Tries to create a socket and, if it's not a datagram socket, connect it
-      to the other end. This method is called during handler initialization,
-      but it's not regarded as an error if the other end isn't listening at
-      this point - the method will be called again when emitting an event, if
-      but it's not regarded as an error if the other end isn't listening yet
-      --- the method will be called again when emitting an event,
-      if there is no socket at that point.
-
-      .. versionadded:: 3.11
 
    .. method:: emit(record)
 
@@ -917,9 +906,8 @@ should, then :meth:`flush` is expected to do the flushing.
 
    .. method:: flush()
 
-      For a :class:`BufferingHandler` instance, flushing means that it sets the
-      buffer to an empty list. This method can be overwritten to implement more useful
-      flushing behavior.
+      You can override this to implement custom flushing behavior. This version
+      just zaps the buffer to empty.
 
 
    .. method:: shouldFlush(record)
@@ -951,9 +939,9 @@ should, then :meth:`flush` is expected to do the flushing.
 
    .. method:: flush()
 
-      For a :class:`MemoryHandler` instance, flushing means just sending the buffered
+      For a :class:`MemoryHandler`, flushing means just sending the buffered
       records to the target, if there is one. The buffer is also cleared when
-      buffered records are sent to the target. Override if you want different behavior.
+      this happens. Override if you want different behavior.
 
 
    .. method:: setTarget(target)
@@ -1052,8 +1040,8 @@ possible, while any potentially slow operations (such as sending an email via
       occur (e.g. because a bounded queue has filled up), the
       :meth:`~logging.Handler.handleError` method is called to handle the
       error. This can result in the record silently being dropped (if
-      :data:`logging.raiseExceptions` is ``False``) or a message printed to
-      ``sys.stderr`` (if :data:`logging.raiseExceptions` is ``True``).
+      :attr:`logging.raiseExceptions` is ``False``) or a message printed to
+      ``sys.stderr`` (if :attr:`logging.raiseExceptions` is ``True``).
 
    .. method:: prepare(record)
 
@@ -1092,13 +1080,7 @@ possible, while any potentially slow operations (such as sending an email via
       want to override this if you want to use blocking behaviour, or a
       timeout, or a customized queue implementation.
 
-   .. attribute:: listener
 
-      When created via configuration using :func:`~logging.config.dictConfig`, this
-      attribute will contain a :class:`QueueListener` instance for use with this
-      handler. Otherwise, it will be ``None``.
-
-      .. versionadded:: 3.12
 
 .. _queue-listener:
 

@@ -2,12 +2,6 @@
 preserve
 [clinic start generated code]*/
 
-#if defined(Py_BUILD_CORE) && !defined(Py_BUILD_CORE_MODULE)
-#  include "pycore_gc.h"            // PyGC_Head
-#  include "pycore_runtime.h"       // _Py_ID()
-#endif
-
-
 PyDoc_STRVAR(_msi_UuidCreate__doc__,
 "UuidCreate($module, /)\n"
 "--\n"
@@ -201,7 +195,7 @@ _msi_Record_SetString(msiobj *self, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     int field;
-    const Py_UNICODE *value = NULL;
+    const Py_UNICODE *value;
 
     if (!_PyArg_CheckPositional("SetString", nargs, 2, 2)) {
         goto exit;
@@ -214,7 +208,11 @@ _msi_Record_SetString(msiobj *self, PyObject *const *args, Py_ssize_t nargs)
         _PyArg_BadArgument("SetString", "argument 2", "str", args[1]);
         goto exit;
     }
+    #if USE_UNICODE_WCHAR_CACHE
+    value = _PyUnicode_AsUnicode(args[1]);
+    #else /* USE_UNICODE_WCHAR_CACHE */
     value = PyUnicode_AsWideCharString(args[1], NULL);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
     if (value == NULL) {
         goto exit;
     }
@@ -222,7 +220,9 @@ _msi_Record_SetString(msiobj *self, PyObject *const *args, Py_ssize_t nargs)
 
 exit:
     /* Cleanup for value */
+    #if !USE_UNICODE_WCHAR_CACHE
     PyMem_Free((void *)value);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
 
     return return_value;
 }
@@ -244,7 +244,7 @@ _msi_Record_SetStream(msiobj *self, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     int field;
-    const Py_UNICODE *value = NULL;
+    const Py_UNICODE *value;
 
     if (!_PyArg_CheckPositional("SetStream", nargs, 2, 2)) {
         goto exit;
@@ -257,7 +257,11 @@ _msi_Record_SetStream(msiobj *self, PyObject *const *args, Py_ssize_t nargs)
         _PyArg_BadArgument("SetStream", "argument 2", "str", args[1]);
         goto exit;
     }
+    #if USE_UNICODE_WCHAR_CACHE
+    value = _PyUnicode_AsUnicode(args[1]);
+    #else /* USE_UNICODE_WCHAR_CACHE */
     value = PyUnicode_AsWideCharString(args[1], NULL);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
     if (value == NULL) {
         goto exit;
     }
@@ -265,7 +269,9 @@ _msi_Record_SetStream(msiobj *self, PyObject *const *args, Py_ssize_t nargs)
 
 exit:
     /* Cleanup for value */
+    #if !USE_UNICODE_WCHAR_CACHE
     PyMem_Free((void *)value);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
 
     return return_value;
 }
@@ -549,13 +555,17 @@ static PyObject *
 _msi_Database_OpenView(msiobj *self, PyObject *arg)
 {
     PyObject *return_value = NULL;
-    const Py_UNICODE *sql = NULL;
+    const Py_UNICODE *sql;
 
     if (!PyUnicode_Check(arg)) {
         _PyArg_BadArgument("OpenView", "argument", "str", arg);
         goto exit;
     }
+    #if USE_UNICODE_WCHAR_CACHE
+    sql = _PyUnicode_AsUnicode(arg);
+    #else /* USE_UNICODE_WCHAR_CACHE */
     sql = PyUnicode_AsWideCharString(arg, NULL);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
     if (sql == NULL) {
         goto exit;
     }
@@ -563,7 +573,9 @@ _msi_Database_OpenView(msiobj *self, PyObject *arg)
 
 exit:
     /* Cleanup for sql */
+    #if !USE_UNICODE_WCHAR_CACHE
     PyMem_Free((void *)sql);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
 
     return return_value;
 }
@@ -638,7 +650,7 @@ static PyObject *
 _msi_OpenDatabase(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
-    const Py_UNICODE *path = NULL;
+    const Py_UNICODE *path;
     int persist;
 
     if (!_PyArg_CheckPositional("OpenDatabase", nargs, 2, 2)) {
@@ -648,7 +660,11 @@ _msi_OpenDatabase(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
         _PyArg_BadArgument("OpenDatabase", "argument 1", "str", args[0]);
         goto exit;
     }
+    #if USE_UNICODE_WCHAR_CACHE
+    path = _PyUnicode_AsUnicode(args[0]);
+    #else /* USE_UNICODE_WCHAR_CACHE */
     path = PyUnicode_AsWideCharString(args[0], NULL);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
     if (path == NULL) {
         goto exit;
     }
@@ -660,7 +676,9 @@ _msi_OpenDatabase(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 
 exit:
     /* Cleanup for path */
+    #if !USE_UNICODE_WCHAR_CACHE
     PyMem_Free((void *)path);
+    #endif /* USE_UNICODE_WCHAR_CACHE */
 
     return return_value;
 }
@@ -695,4 +713,4 @@ _msi_CreateRecord(PyObject *module, PyObject *arg)
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=7d083c61679eed83 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=d7eb07e6bfcdc13f input=a9049054013a1b77]*/

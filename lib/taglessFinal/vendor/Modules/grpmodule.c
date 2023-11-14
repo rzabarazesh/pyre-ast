@@ -65,14 +65,8 @@ mkgrent(PyObject *module, struct group *p)
         Py_DECREF(v);
         return NULL;
     }
-    for (member = p->gr_mem; ; member++) {
-        char *group_member;
-        // member can be misaligned
-        memcpy(&group_member, member, sizeof(group_member));
-        if (group_member == NULL) {
-            break;
-        }
-        PyObject *x = PyUnicode_DecodeFSDefault(group_member);
+    for (member = p->gr_mem; *member != NULL; member++) {
+        PyObject *x = PyUnicode_DecodeFSDefault(*member);
         if (x == NULL || PyList_Append(w, x) != 0) {
             Py_XDECREF(x);
             Py_DECREF(w);
@@ -333,7 +327,6 @@ grpmodule_exec(PyObject *module)
 
 static PyModuleDef_Slot grpmodule_slots[] = {
     {Py_mod_exec, grpmodule_exec},
-    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
     {0, NULL}
 };
 
