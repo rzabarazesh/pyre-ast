@@ -1,48 +1,28 @@
-(rule
- (enabled_if (eq %{os_type} windows))
- (deps
-  (source_tree vendor-mingw))
- (targets libpython.a pyconfig.h)
- (action
-  (no-infer
-   (progn
-    (chdir
-     vendor-mingw
-     (progn
-      (run powershell -File ./configure.ps1)
-      (copy vendor-mingw/libpython3.11.a libpython.a)
-      (copy vendor-mingw/pyconfig.h pyconfig.h)))))))
+(subdir
+ vendor/Modules
+ (dirs :standard _*))
+
+(subdir
+ vendor/Lib
+ (dirs :standard _*))
 
 (rule
- (enabled_if (eq %{os_type} unix))
  (deps
-  (source_tree vendor-unix))
+  (source_tree vendor))
  (targets libpython.a pyconfig.h)
  (action
   (no-infer
    (progn
     (chdir
-     vendor-unix
+     vendor
      (setenv
       MACOSX_DEPLOYMENT_TARGET
       11.0
       (progn
        (run ./configure)
-       (run make libpython3.11.a))))
-    (copy vendor-unix/libpython3.11.a libpython.a)
-    (copy vendor-unix/pyconfig.h pyconfig.h)))))
-
-(subdir
- (if (eq %{os_type} windows) 
-  vendor-mingw/Modules
-  vendor/Modules)
- (dirs :standard _*))
-
-(subdir
- (if (eq %{os_type} windows)
-  vendor-mingw/Lib
-  vendor-unix/Lib)
- (dirs :standard _*))
+       (run make libpython3.12.a))))
+    (copy vendor/libpython3.12.a libpython.a)
+    (copy vendor/pyconfig.h pyconfig.h)))))
 
 (library
  (name taglessFinal)
@@ -52,5 +32,5 @@
  (foreign_stubs
   (language c)
   (names binding)
-  (flags :standard -I(if (eq %{os_type} windows) vendor-mingw/Include vendor-unix/Include) -I.))
+  (flags :standard -Ivendor/Include -I.))
  (foreign_archives python))
