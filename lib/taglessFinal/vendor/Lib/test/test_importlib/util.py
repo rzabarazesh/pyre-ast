@@ -27,7 +27,7 @@ EXTENSIONS.path = None
 EXTENSIONS.ext = None
 EXTENSIONS.filename = None
 EXTENSIONS.file_path = None
-EXTENSIONS.name = '_testsinglephase'
+EXTENSIONS.name = '_testcapi'
 
 def _extension_details():
     global EXTENSIONS
@@ -131,8 +131,9 @@ def uncache(*names):
 
     """
     for name in names:
-        if name in ('sys', 'marshal'):
-            raise ValueError("cannot uncache {}".format(name))
+        if name in ('sys', 'marshal', 'imp'):
+            raise ValueError(
+                "cannot uncache {0}".format(name))
         try:
             del sys.modules[name]
         except KeyError:
@@ -194,7 +195,8 @@ def import_state(**kwargs):
                 new_value = default
             setattr(sys, attr, new_value)
         if len(kwargs):
-            raise ValueError('unrecognized arguments: {}'.format(kwargs))
+            raise ValueError(
+                    'unrecognized arguments: {0}'.format(kwargs.keys()))
         yield
     finally:
         for attr, value in originals.items():
@@ -242,6 +244,30 @@ class _ImporterMock:
         self._uncache.__exit__(None, None, None)
 
 
+class mock_modules(_ImporterMock):
+
+    """Importer mock using PEP 302 APIs."""
+
+    def find_module(self, fullname, path=None):
+        if fullname not in self.modules:
+            return None
+        else:
+            return self
+
+    def load_module(self, fullname):
+        if fullname not in self.modules:
+            raise ImportError
+        else:
+            sys.modules[fullname] = self.modules[fullname]
+            if fullname in self.module_code:
+                try:
+                    self.module_code[fullname]()
+                except Exception:
+                    del sys.modules[fullname]
+                    raise
+            return self.modules[fullname]
+
+
 class mock_spec(_ImporterMock):
 
     """Importer mock using PEP 451 APIs."""
@@ -272,7 +298,7 @@ def writes_bytecode_files(fxn):
     """Decorator to protect sys.dont_write_bytecode from mutation and to skip
     tests that require it to be set to False."""
     if sys.dont_write_bytecode:
-        return unittest.skip("relies on writing bytecode")(fxn)
+        return lambda *args, **kwargs: None
     @functools.wraps(fxn)
     def wrapper(*args, **kwargs):
         original = sys.dont_write_bytecode

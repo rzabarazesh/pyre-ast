@@ -6,8 +6,8 @@
               representations.
 
 .. index::
-   pair: module; uu
-   pair: module; base64
+   module: uu
+   module: base64
 
 --------------
 

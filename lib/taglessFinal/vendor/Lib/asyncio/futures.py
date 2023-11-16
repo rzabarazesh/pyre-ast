@@ -77,7 +77,7 @@ class Future:
         the default event loop.
         """
         if loop is None:
-            self._loop = events.get_event_loop()
+            self._loop = events._get_event_loop()
         else:
             self._loop = loop
         self._callbacks = []
@@ -398,8 +398,6 @@ def _chain_future(source, destination):
         if dest_loop is None or dest_loop is source_loop:
             _set_state(destination, source)
         else:
-            if dest_loop.is_closed():
-                return
             dest_loop.call_soon_threadsafe(_set_state, destination, source)
 
     destination.add_done_callback(_call_check_cancel)
@@ -413,7 +411,7 @@ def wrap_future(future, *, loop=None):
     assert isinstance(future, concurrent.futures.Future), \
         f'concurrent.futures.Future is expected, got {future!r}'
     if loop is None:
-        loop = events.get_event_loop()
+        loop = events._get_event_loop()
     new_future = loop.create_future()
     _chain_future(future, new_future)
     return new_future

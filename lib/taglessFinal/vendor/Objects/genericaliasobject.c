@@ -121,36 +121,6 @@ done:
     return err;
 }
 
-static int
-ga_repr_items_list(_PyUnicodeWriter *writer, PyObject *p)
-{
-    assert(PyList_CheckExact(p));
-
-    Py_ssize_t len = PyList_GET_SIZE(p);
-
-    if (_PyUnicodeWriter_WriteASCIIString(writer, "[", 1) < 0) {
-        return -1;
-    }
-
-    for (Py_ssize_t i = 0; i < len; i++) {
-        if (i > 0) {
-            if (_PyUnicodeWriter_WriteASCIIString(writer, ", ", 2) < 0) {
-                return -1;
-            }
-        }
-        PyObject *item = PyList_GET_ITEM(p, i);
-        if (ga_repr_item(writer, item) < 0) {
-            return -1;
-        }
-    }
-
-    if (_PyUnicodeWriter_WriteASCIIString(writer, "]", 1) < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
 static PyObject *
 ga_repr(PyObject *self)
 {
@@ -178,13 +148,7 @@ ga_repr(PyObject *self)
             }
         }
         PyObject *p = PyTuple_GET_ITEM(alias->args, i);
-        if (PyList_CheckExact(p)) {
-            // Looks like we are working with ParamSpec's list of type args:
-            if (ga_repr_items_list(&writer, p) < 0) {
-                goto error;
-            }
-        }
-        else if (ga_repr_item(&writer, p) < 0) {
+        if (ga_repr_item(&writer, p) < 0) {
             goto error;
         }
     }
@@ -219,7 +183,8 @@ static int
 tuple_add(PyObject *self, Py_ssize_t len, PyObject *item)
 {
     if (tuple_index(self, len, item) < 0) {
-        PyTuple_SET_ITEM(self, len, Py_NewRef(item));
+        Py_INCREF(item);
+        PyTuple_SET_ITEM(self, len, item);
         return 1;
     }
     return 0;
@@ -236,7 +201,8 @@ tuple_extend(PyObject **dst, Py_ssize_t dstindex,
     assert(dstindex + count <= PyTuple_GET_SIZE(*dst));
     for (Py_ssize_t i = 0; i < count; ++i) {
         PyObject *item = src[i];
-        PyTuple_SET_ITEM(*dst, dstindex + i, Py_NewRef(item));
+        Py_INCREF(item);
+        PyTuple_SET_ITEM(*dst, dstindex + i, item);
     }
     return dstindex + count;
 }
@@ -338,7 +304,8 @@ subs_tvars(PyObject *obj, PyObject *params,
                     continue;
                 }
             }
-            PyTuple_SET_ITEM(subargs, j, Py_NewRef(arg));
+            Py_INCREF(arg);
+            PyTuple_SET_ITEM(subargs, j, arg);
             j++;
         }
         assert(j == PyTuple_GET_SIZE(subargs));
@@ -380,7 +347,8 @@ _unpacked_tuple_args(PyObject *arg)
             ((gaobject *)arg)->origin == (PyObject *)&PyTuple_Type)
     {
         result = ((gaobject *)arg)->args;
-        return Py_NewRef(result);
+        Py_INCREF(result);
+        return result;
     }
 
     if (_PyObject_LookupAttr(arg, &_Py_ID(__typing_unpacked_tuple_args__), &result) > 0) {
@@ -490,12 +458,6 @@ _Py_subs_parameters(PyObject *self, PyObject *args, PyObject *parameters, PyObje
     }
     for (Py_ssize_t iarg = 0, jarg = 0; iarg < nargs; iarg++) {
         PyObject *arg = PyTuple_GET_ITEM(args, iarg);
-        if (PyType_Check(arg)) {
-            PyTuple_SET_ITEM(newargs, jarg, Py_NewRef(arg));
-            jarg++;
-            continue;
-        }
-
         int unpack = _is_unpacked_typevartuple(arg);
         if (unpack < 0) {
             Py_DECREF(newargs);
@@ -798,7 +760,8 @@ ga_parameters(PyObject *self, void *unused)
             return NULL;
         }
     }
-    return Py_NewRef(alias->parameters);
+    Py_INCREF(alias->parameters);
+    return alias->parameters;
 }
 
 static PyObject *
@@ -806,7 +769,8 @@ ga_unpacked_tuple_args(PyObject *self, void *unused)
 {
     gaobject *alias = (gaobject *)self;
     if (alias->starred && alias->origin == (PyObject *)&PyTuple_Type) {
-        return Py_NewRef(alias->args);
+        Py_INCREF(alias->args);
+        return alias->args;
     }
     Py_RETURN_NONE;
 }
@@ -832,7 +796,8 @@ setup_ga(gaobject *alias, PyObject *origin, PyObject *args) {
         Py_INCREF(args);
     }
 
-    alias->origin = Py_NewRef(origin);
+    Py_INCREF(origin);
+    alias->origin = origin;
     alias->args = args;
     alias->parameters = NULL;
     alias->weakreflist = NULL;
@@ -913,17 +878,8 @@ ga_iter_clear(PyObject *self) {
 static PyObject *
 ga_iter_reduce(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    PyObject *iter = _PyEval_GetBuiltin(&_Py_ID(iter));
     gaiterobject *gi = (gaiterobject *)self;
-
-    /* _PyEval_GetBuiltin can invoke arbitrary code,
-     * call must be before access of iterator pointers.
-     * see issue #101765 */
-
-    if (gi->obj)
-        return Py_BuildValue("N(O)", iter, gi->obj);
-    else
-        return Py_BuildValue("N(())", iter);
+    return Py_BuildValue("N(O)", _PyEval_GetBuiltin(&_Py_ID(iter)), gi->obj);
 }
 
 static PyMethodDef ga_iter_methods[] = {

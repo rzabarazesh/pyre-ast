@@ -9,8 +9,6 @@
 .. moduleauthor:: Paul Ganssle <paul@ganssle.io>
 .. sectionauthor:: Paul Ganssle <paul@ganssle.io>
 
-**Source code:** :source:`Lib/zoneinfo`
-
 --------------
 
 The :mod:`zoneinfo` module provides a concrete time zone implementation to
@@ -241,7 +239,7 @@ The following class methods are also available:
     .. warning::
 
         Invoking this function may change the semantics of datetimes using
-        ``ZoneInfo`` in surprising ways; this modifies module state
+        ``ZoneInfo`` in surprising ways; this modifies process-wide global state
         and thus may have wide-ranging effects. Only use it if you know that you
         need to.
 

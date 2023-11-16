@@ -25,7 +25,7 @@ Python's general purpose built-in containers, :class:`dict`, :class:`list`,
 :func:`namedtuple`      factory function for creating tuple subclasses with named fields
 :class:`deque`          list-like container with fast appends and pops on either end
 :class:`ChainMap`       dict-like class for creating a single view of multiple mappings
-:class:`Counter`        dict subclass for counting :term:`hashable` objects
+:class:`Counter`        dict subclass for counting hashable objects
 :class:`OrderedDict`    dict subclass that remembers the order entries were added
 :class:`defaultdict`    dict subclass that calls a factory function to supply missing values
 :class:`UserDict`       wrapper around dictionary objects for easier dict subclassing
@@ -229,7 +229,6 @@ For example::
     >>> cnt = Counter()
     >>> for word in ['red', 'blue', 'red', 'green', 'blue', 'blue']:
     ...     cnt[word] += 1
-    ...
     >>> cnt
     Counter({'blue': 3, 'red': 2, 'green': 1})
 
@@ -242,7 +241,7 @@ For example::
 
 .. class:: Counter([iterable-or-mapping])
 
-    A :class:`Counter` is a :class:`dict` subclass for counting :term:`hashable` objects.
+    A :class:`Counter` is a :class:`dict` subclass for counting hashable objects.
     It is a collection where elements are stored as dictionary keys
     and their counts are stored as dictionary values.  Counts are allowed to be
     any integer value including zero or negative counts.  The :class:`Counter`
@@ -819,7 +818,6 @@ zero):
 
     >>> def constant_factory(value):
     ...     return lambda: value
-    ...
     >>> d = defaultdict(constant_factory('<missing>'))
     >>> d.update(name='John', action='ran')
     >>> '%(name)s %(action)s to %(object)s' % d
@@ -1203,7 +1201,6 @@ variants of :func:`functools.lru_cache`:
 
 .. testcode::
 
-    from collections import OrderedDict
     from time import time
 
     class TimeBoundedLRU:

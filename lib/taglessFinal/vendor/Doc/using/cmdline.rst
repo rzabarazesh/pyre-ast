@@ -109,7 +109,7 @@ source.
    Many standard library modules contain code that is invoked on their execution
    as a script.  An example is the :mod:`timeit` module::
 
-       python -m timeit -s "setup here" "benchmarked code here"
+       python -m timeit -s 'setup here' 'benchmarked code here'
        python -m timeit -h # for details
 
    .. audit-event:: cpython.run_module module-name cmdoption-m
@@ -271,11 +271,8 @@ Miscellaneous options
 
 .. cmdoption:: -d
 
-   Turn on parser debugging output (for expert only).
-   See also the :envvar:`PYTHONDEBUG` environment variable.
-
-   This option requires a :ref:`debug build of Python <debug-build>`, otherwise
-   it's ignored.
+   Turn on parser debugging output (for expert only, depending on compilation
+   options).  See also :envvar:`PYTHONDEBUG`.
 
 
 .. cmdoption:: -E
@@ -370,7 +367,7 @@ Miscellaneous options
    Hash randomization is intended to provide protection against a
    denial-of-service caused by carefully chosen inputs that exploit the worst
    case performance of a dict construction, O(n\ :sup:`2`) complexity.  See
-   http://ocert.org/advisories/ocert-2011-003.html for details.
+   http://www.ocert.org/advisories/ocert-2011-003.html for details.
 
    :envvar:`PYTHONHASHSEED` allows you to set a fixed value for the hash
    seed secret.
@@ -495,8 +492,7 @@ Miscellaneous options
    Reserved for various implementation-specific options.  CPython currently
    defines the following possible values:
 
-   * ``-X faulthandler`` to enable :mod:`faulthandler`.
-     See also :envvar:`PYTHONFAULTHANDLER`.
+   * ``-X faulthandler`` to enable :mod:`faulthandler`;
    * ``-X showrefcount`` to output the total reference count and number of used
      memory blocks when the program finishes or after each statement in the
      interactive interpreter. This only works on :ref:`debug builds
@@ -504,9 +500,8 @@ Miscellaneous options
    * ``-X tracemalloc`` to start tracing Python memory allocations using the
      :mod:`tracemalloc` module. By default, only the most recent frame is
      stored in a traceback of a trace. Use ``-X tracemalloc=NFRAME`` to start
-     tracing with a traceback limit of *NFRAME* frames.
-     See :func:`tracemalloc.start` and :envvar:`PYTHONTRACEMALLOC`
-     for more information.
+     tracing with a traceback limit of *NFRAME* frames. See the
+     :func:`tracemalloc.start` for more information.
    * ``-X int_max_str_digits`` configures the :ref:`integer string conversion
      length limitation <int_max_str_digits>`.  See also
      :envvar:`PYTHONINTMAXSTRDIGITS`.
@@ -521,7 +516,6 @@ Miscellaneous options
    * ``-X utf8`` enables the :ref:`Python UTF-8 Mode <utf8-mode>`.
      ``-X utf8=0`` explicitly disables :ref:`Python UTF-8 Mode <utf8-mode>`
      (even when it would otherwise activate automatically).
-     See also :envvar:`PYTHONUTF8`.
    * ``-X pycache_prefix=PATH`` enables writing ``.pyc`` files to a parallel
      tree rooted at the given directory instead of to the code tree. See also
      :envvar:`PYTHONPYCACHEPREFIX`.
@@ -541,11 +535,6 @@ Miscellaneous options
      development (running from the source tree) then the default is "off".
      Note that the "importlib_bootstrap" and "importlib_bootstrap_external"
      frozen modules are always used, even if this flag is set to "off".
-   * ``-X perf`` enables support for the Linux ``perf`` profiler.
-     When this option is provided, the ``perf`` profiler will be able to
-     report Python calls. This option is only available on some platforms and
-     will do nothing if is not supported on the current system. The default value
-     is "off". See also :envvar:`PYTHONPERFSUPPORT` and :ref:`perf_profiling`.
 
    It also allows passing arbitrary values and retrieving them through the
    :data:`sys._xoptions` dictionary.
@@ -589,9 +578,6 @@ Miscellaneous options
 
    .. versionadded:: 3.11
       The ``-X int_max_str_digits`` option.
-
-   .. versionadded:: 3.12
-      The ``-X perf`` option.
 
 
 Options you shouldn't use
@@ -704,9 +690,6 @@ conflict.
    :option:`-d` option.  If set to an integer, it is equivalent to specifying
    :option:`-d` multiple times.
 
-   This environment variable requires a :ref:`debug build of Python
-   <debug-build>`, otherwise it's ignored.
-
 
 .. envvar:: PYTHONINSPECT
 
@@ -811,8 +794,8 @@ conflict.
 
    Defines the :data:`user base directory <site.USER_BASE>`, which is used to
    compute the path of the :data:`user site-packages directory <site.USER_SITE>`
-   and :ref:`installation paths <sysconfig-user-scheme>` for
-   ``python -m pip install --user``.
+   and :ref:`Distutils installation paths <inst-alt-install-user>` for
+   ``python setup.py install --user``.
 
    .. seealso::
 
@@ -864,9 +847,7 @@ conflict.
    Python memory allocations using the :mod:`tracemalloc` module. The value of
    the variable is the maximum number of frames stored in a traceback of a
    trace. For example, ``PYTHONTRACEMALLOC=1`` stores only the most recent
-   frame.
-   See the :func:`tracemalloc.start` function for more information.
-   This is equivalent to setting the :option:`-X` ``tracemalloc`` option.
+   frame. See the :func:`tracemalloc.start` for more information.
 
    .. versionadded:: 3.4
 
@@ -874,8 +855,8 @@ conflict.
 .. envvar:: PYTHONPROFILEIMPORTTIME
 
    If this environment variable is set to a non-empty string, Python will
-   show how long each import takes.
-   This is equivalent to setting the :option:`-X` ``importtime`` option.
+   show how long each import takes.  This is exactly equivalent to setting
+   ``-X importtime`` on the command line.
 
    .. versionadded:: 3.7
 
@@ -897,11 +878,11 @@ conflict.
    * ``default``: use the :ref:`default memory allocators
      <default-memory-allocators>`.
    * ``malloc``: use the :c:func:`malloc` function of the C library
-     for all domains (:c:macro:`PYMEM_DOMAIN_RAW`, :c:macro:`PYMEM_DOMAIN_MEM`,
-     :c:macro:`PYMEM_DOMAIN_OBJ`).
+     for all domains (:c:data:`PYMEM_DOMAIN_RAW`, :c:data:`PYMEM_DOMAIN_MEM`,
+     :c:data:`PYMEM_DOMAIN_OBJ`).
    * ``pymalloc``: use the :ref:`pymalloc allocator <pymalloc>` for
-     :c:macro:`PYMEM_DOMAIN_MEM` and :c:macro:`PYMEM_DOMAIN_OBJ` domains and use
-     the :c:func:`malloc` function for the :c:macro:`PYMEM_DOMAIN_RAW` domain.
+     :c:data:`PYMEM_DOMAIN_MEM` and :c:data:`PYMEM_DOMAIN_OBJ` domains and use
+     the :c:func:`malloc` function for the :c:data:`PYMEM_DOMAIN_RAW` domain.
 
    Install :ref:`debug hooks <pymem-debug-hooks>`:
 
@@ -1017,7 +998,6 @@ conflict.
    If this environment variable is set to a non-empty string, enable
    :ref:`Python Development Mode <devmode>`, introducing additional runtime
    checks that are too expensive to be enabled by default.
-   This is equivalent to setting the :option:`-X` ``dev`` option.
 
    .. versionadded:: 3.7
 
@@ -1051,21 +1031,19 @@ conflict.
 
    .. versionadded:: 3.11
 
-.. envvar:: PYTHONPERFSUPPORT
-
-   If this variable is set to a nonzero value, it enables support for
-   the Linux ``perf`` profiler so Python calls can be detected by it.
-
-   If set to ``0``, disable Linux ``perf`` profiler support.
-
-   See also the :option:`-X perf <-X>` command-line option
-   and :ref:`perf_profiling`.
-
-   .. versionadded:: 3.12
 
 
 Debug-mode variables
 ~~~~~~~~~~~~~~~~~~~~
+
+.. envvar:: PYTHONTHREADDEBUG
+
+   If set, Python will print threading debug info into stdout.
+
+   Need a :ref:`debug build of Python <debug-build>`.
+
+   .. deprecated-removed:: 3.10 3.12
+
 
 .. envvar:: PYTHONDUMPREFS
 

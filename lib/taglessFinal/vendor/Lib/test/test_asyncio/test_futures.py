@@ -10,7 +10,6 @@ from unittest import mock
 from types import GenericAlias
 import asyncio
 from asyncio import futures
-import warnings
 from test.test_asyncio import utils as test_utils
 from test import support
 
@@ -146,8 +145,10 @@ class BaseFutureTests:
         self.assertTrue(f.cancelled())
 
     def test_constructor_without_loop(self):
-        with self.assertRaisesRegex(RuntimeError, 'no current event loop'):
-            self._new_future()
+        with self.assertWarns(DeprecationWarning) as cm:
+            with self.assertRaisesRegex(RuntimeError, 'There is no current event loop'):
+                self._new_future()
+        self.assertEqual(cm.filename, __file__)
 
     def test_constructor_use_running_loop(self):
         async def test():
@@ -157,10 +158,12 @@ class BaseFutureTests:
         self.assertIs(f.get_loop(), self.loop)
 
     def test_constructor_use_global_loop(self):
-        # Deprecated in 3.10, undeprecated in 3.12
+        # Deprecated in 3.10
         asyncio.set_event_loop(self.loop)
         self.addCleanup(asyncio.set_event_loop, None)
-        f = self._new_future()
+        with self.assertWarns(DeprecationWarning) as cm:
+            f = self._new_future()
+        self.assertEqual(cm.filename, __file__)
         self.assertIs(f._loop, self.loop)
         self.assertIs(f.get_loop(), self.loop)
 
@@ -496,8 +499,10 @@ class BaseFutureTests:
             return (arg, threading.get_ident())
         ex = concurrent.futures.ThreadPoolExecutor(1)
         f1 = ex.submit(run, 'oi')
-        with self.assertRaisesRegex(RuntimeError, 'no current event loop'):
-            asyncio.wrap_future(f1)
+        with self.assertWarns(DeprecationWarning) as cm:
+            with self.assertRaises(RuntimeError):
+                asyncio.wrap_future(f1)
+        self.assertEqual(cm.filename, __file__)
         ex.shutdown(wait=True)
 
     def test_wrap_future_use_running_loop(self):
@@ -512,14 +517,16 @@ class BaseFutureTests:
         ex.shutdown(wait=True)
 
     def test_wrap_future_use_global_loop(self):
-        # Deprecated in 3.10, undeprecated in 3.12
+        # Deprecated in 3.10
         asyncio.set_event_loop(self.loop)
         self.addCleanup(asyncio.set_event_loop, None)
         def run(arg):
             return (arg, threading.get_ident())
         ex = concurrent.futures.ThreadPoolExecutor(1)
         f1 = ex.submit(run, 'oi')
-        f2 = asyncio.wrap_future(f1)
+        with self.assertWarns(DeprecationWarning) as cm:
+            f2 = asyncio.wrap_future(f1)
+        self.assertEqual(cm.filename, __file__)
         self.assertIs(self.loop, f2._loop)
         ex.shutdown(wait=True)
 
@@ -604,16 +611,10 @@ class BaseFutureTests:
     def test_future_iter_throw(self):
         fut = self._new_future(loop=self.loop)
         fi = iter(fut)
-        with self.assertWarns(DeprecationWarning):
-            self.assertRaises(Exception, fi.throw, Exception, Exception("zebra"), None)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            self.assertRaises(TypeError, fi.throw,
-                            Exception, Exception("elephant"), 32)
-            self.assertRaises(TypeError, fi.throw,
-                            Exception("elephant"), Exception("elephant"))
-            # https://github.com/python/cpython/issues/101326
-            self.assertRaises(ValueError, fi.throw, ValueError, None, None)
+        self.assertRaises(TypeError, fi.throw,
+                          Exception, Exception("elephant"), 32)
+        self.assertRaises(TypeError, fi.throw,
+                          Exception("elephant"), Exception("elephant"))
         self.assertRaises(TypeError, fi.throw, list)
 
     def test_future_del_collect(self):
@@ -820,21 +821,6 @@ class BaseFutureDoneCallbackTests():
             def __eq__(self, other):
                 fut.remove_done_callback(id)
                 return False
-
-        fut.remove_done_callback(evil())
-
-    def test_remove_done_callbacks_list_clear(self):
-        # see https://github.com/python/cpython/issues/97592 for details
-
-        fut = self._new_future()
-        fut.add_done_callback(str)
-
-        for _ in range(63):
-            fut.add_done_callback(id)
-
-        class evil:
-            def __eq__(self, other):
-                fut.remove_done_callback(other)
 
         fut.remove_done_callback(evil())
 

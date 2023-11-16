@@ -107,11 +107,8 @@ class _SSLProtocolTransport(transports._FlowControlMixin,
         protocol's connection_lost() method will (eventually) called
         with None as its argument.
         """
-        if not self._closed:
-            self._closed = True
-            self._ssl_protocol._start_shutdown()
-        else:
-            self._ssl_protocol = None
+        self._closed = True
+        self._ssl_protocol._start_shutdown()
 
     def __del__(self, _warnings=warnings):
         if not self._closed:
@@ -199,6 +196,12 @@ class _SSLProtocolTransport(transports._FlowControlMixin,
         """Return the current size of the read buffer."""
         return self._ssl_protocol._get_read_buffer_size()
 
+    def get_write_buffer_limits(self):
+        """Get the high and low watermarks for write flow control.
+        Return a tuple (low, high) where low and high are
+        positive number of bytes."""
+        return self._ssl_protocol._transport.get_write_buffer_limits()
+
     @property
     def _protocol_paused(self):
         # Required for sendfile fallback pause_writing/resume_writing logic
@@ -244,8 +247,7 @@ class _SSLProtocolTransport(transports._FlowControlMixin,
         called with None as its argument.
         """
         self._closed = True
-        if self._ssl_protocol is not None:
-            self._ssl_protocol._abort()
+        self._ssl_protocol._abort()
 
     def _force_close(self, exc):
         self._closed = True

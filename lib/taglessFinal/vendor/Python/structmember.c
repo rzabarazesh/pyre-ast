@@ -8,12 +8,6 @@ PyObject *
 PyMember_GetOne(const char *obj_addr, PyMemberDef *l)
 {
     PyObject *v;
-    if (l->flags & Py_RELATIVE_OFFSET) {
-        PyErr_SetString(
-            PyExc_SystemError,
-            "PyMember_GetOne used with Py_RELATIVE_OFFSET");
-        return NULL;
-    }
 
     const char* addr = obj_addr + l->offset;
     switch (l->type) {
@@ -55,7 +49,8 @@ PyMember_GetOne(const char *obj_addr, PyMemberDef *l)
         break;
     case T_STRING:
         if (*(char**)addr == NULL) {
-            v = Py_NewRef(Py_None);
+            Py_INCREF(Py_None);
+            v = Py_None;
         }
         else
             v = PyUnicode_FromString(*(char**)addr);
@@ -80,7 +75,7 @@ PyMember_GetOne(const char *obj_addr, PyMemberDef *l)
             PyErr_Format(PyExc_AttributeError,
                          "'%.200s' object has no attribute '%s'",
                          tp->tp_name, l->name);
-        }
+       }
         Py_XINCREF(v);
         break;
     case T_LONGLONG:
@@ -90,7 +85,8 @@ PyMember_GetOne(const char *obj_addr, PyMemberDef *l)
         v = PyLong_FromUnsignedLongLong(*(unsigned long long *)addr);
         break;
     case T_NONE:
-        v = Py_NewRef(Py_None);
+        v = Py_None;
+        Py_INCREF(v);
         break;
     default:
         PyErr_SetString(PyExc_SystemError, "bad memberdescr type");
@@ -109,12 +105,6 @@ int
 PyMember_SetOne(char *addr, PyMemberDef *l, PyObject *v)
 {
     PyObject *oldv;
-    if (l->flags & Py_RELATIVE_OFFSET) {
-        PyErr_SetString(
-            PyExc_SystemError,
-            "PyMember_SetOne used with Py_RELATIVE_OFFSET");
-        return -1;
-    }
 
     addr += l->offset;
 
@@ -257,8 +247,9 @@ PyMember_SetOne(char *addr, PyMemberDef *l, PyObject *v)
         break;
     case T_OBJECT:
     case T_OBJECT_EX:
+        Py_XINCREF(v);
         oldv = *(PyObject **)addr;
-        *(PyObject **)addr = Py_XNewRef(v);
+        *(PyObject **)addr = v;
         Py_XDECREF(oldv);
         break;
     case T_CHAR: {

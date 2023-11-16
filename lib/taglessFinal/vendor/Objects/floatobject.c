@@ -12,7 +12,7 @@
 #include "pycore_object.h"        // _PyObject_Init()
 #include "pycore_pymath.h"        // _PY_SHORT_FLOAT_REPR
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
-#include "pycore_structseq.h"     // _PyStructSequence_FiniBuiltin()
+#include "pycore_structseq.h"     // _PyStructSequence_FiniType()
 
 #include <ctype.h>
 #include <float.h>
@@ -371,7 +371,8 @@ convert_to_double(PyObject **v, double *dbl)
         }
     }
     else {
-        *v = Py_NewRef(Py_NotImplemented);
+        Py_INCREF(Py_NotImplemented);
+        *v = Py_NotImplemented;
         return -1;
     }
     return 0;
@@ -531,17 +532,20 @@ float_richcompare(PyObject *v, PyObject *w, int op)
                 temp = _PyLong_Lshift(ww, 1);
                 if (temp == NULL)
                     goto Error;
-                Py_SETREF(ww, temp);
+                Py_DECREF(ww);
+                ww = temp;
 
                 temp = _PyLong_Lshift(vv, 1);
                 if (temp == NULL)
                     goto Error;
-                Py_SETREF(vv, temp);
+                Py_DECREF(vv);
+                vv = temp;
 
                 temp = PyNumber_Or(vv, _PyLong_GetOne());
                 if (temp == NULL)
                     goto Error;
-                Py_SETREF(vv, temp);
+                Py_DECREF(vv);
+                vv = temp;
             }
 
             r = PyObject_RichCompareBool(vv, ww, op);
@@ -900,7 +904,8 @@ float_is_integer_impl(PyObject *self)
                              PyExc_ValueError);
         return NULL;
     }
-    return Py_NewRef(o);
+    Py_INCREF(o);
+    return o;
 }
 
 /*[clinic input]
@@ -1119,12 +1124,11 @@ float___round___impl(PyObject *self, PyObject *o_ndigits)
 static PyObject *
 float_float(PyObject *v)
 {
-    if (PyFloat_CheckExact(v)) {
-        return Py_NewRef(v);
-    }
-    else {
-        return PyFloat_FromDouble(((PyFloatObject *)v)->ob_fval);
-    }
+    if (PyFloat_CheckExact(v))
+        Py_INCREF(v);
+    else
+        v = PyFloat_FromDouble(((PyFloatObject *)v)->ob_fval);
+    return v;
 }
 
 /*[clinic input]
@@ -1546,10 +1550,12 @@ float_fromhex(PyTypeObject *type, PyObject *string)
 /*[clinic input]
 float.as_integer_ratio
 
-Return a pair of integers, whose ratio is exactly equal to the original float.
+Return integer ratio.
 
-The ratio is in lowest terms and has a positive denominator.  Raise
-OverflowError on infinities and a ValueError on NaNs.
+Return a pair of integers, whose ratio is exactly equal to the original float
+and with a positive denominator.
+
+Raise OverflowError on infinities and a ValueError on NaNs.
 
 >>> (10.0).as_integer_ratio()
 (10, 1)
@@ -1561,7 +1567,7 @@ OverflowError on infinities and a ValueError on NaNs.
 
 static PyObject *
 float_as_integer_ratio_impl(PyObject *self)
-/*[clinic end generated code: output=65f25f0d8d30a712 input=d5ba7765655d75bd]*/
+/*[clinic end generated code: output=65f25f0d8d30a712 input=e21d08b4630c2e44]*/
 {
     double self_double;
     double float_part;
@@ -1718,14 +1724,12 @@ float___getnewargs___impl(PyObject *self)
 }
 
 /* this is for the benefit of the pack/unpack routines below */
-typedef enum _py_float_format_type float_format_type;
-#define unknown_format _py_float_format_unknown
-#define ieee_big_endian_format _py_float_format_ieee_big_endian
-#define ieee_little_endian_format _py_float_format_ieee_little_endian
 
-#define float_format (_PyRuntime.float_state.float_format)
-#define double_format (_PyRuntime.float_state.double_format)
+typedef enum {
+    unknown_format, ieee_big_endian_format, ieee_little_endian_format
+} float_format_type;
 
+static float_format_type double_format, float_format;
 
 /*[clinic input]
 @classmethod
@@ -1926,9 +1930,13 @@ PyTypeObject PyFloat_Type = {
     .tp_vectorcall = (vectorcallfunc)float_vectorcall,
 };
 
-static void
-_init_global_state(void)
+void
+_PyFloat_InitState(PyInterpreterState *interp)
 {
+    if (!_Py_IsMainInterpreter(interp)) {
+        return;
+    }
+
     float_format_type detected_double_format, detected_float_format;
 
     /* We attempt to determine if this machine is using IEEE
@@ -1978,23 +1986,22 @@ _init_global_state(void)
     float_format = detected_float_format;
 }
 
-void
-_PyFloat_InitState(PyInterpreterState *interp)
-{
-    if (!_Py_IsMainInterpreter(interp)) {
-        return;
-    }
-    _init_global_state();
-}
-
 PyStatus
 _PyFloat_InitTypes(PyInterpreterState *interp)
 {
+    if (!_Py_IsMainInterpreter(interp)) {
+        return _PyStatus_OK();
+    }
+
+    if (PyType_Ready(&PyFloat_Type) < 0) {
+        return _PyStatus_ERR("Can't initialize float type");
+    }
+
     /* Init float info */
-    if (_PyStructSequence_InitBuiltin(interp, &FloatInfoType,
-                                      &floatinfo_desc) < 0)
-    {
-        return _PyStatus_ERR("can't init float info type");
+    if (FloatInfoType.tp_name == NULL) {
+        if (PyStructSequence_InitType2(&FloatInfoType, &floatinfo_desc) < 0) {
+            return _PyStatus_ERR("can't init float info type");
+        }
     }
 
     return _PyStatus_OK();
@@ -2029,7 +2036,9 @@ _PyFloat_Fini(PyInterpreterState *interp)
 void
 _PyFloat_FiniType(PyInterpreterState *interp)
 {
-    _PyStructSequence_FiniBuiltin(interp, &FloatInfoType);
+    if (_Py_IsMainInterpreter(interp)) {
+        _PyStructSequence_FiniType(&FloatInfoType);
+    }
 }
 
 /* Print summary info about the state of the optimized allocator */
@@ -2424,14 +2433,25 @@ PyFloat_Unpack2(const char *data, int le)
     f |= *p;
 
     if (e == 0x1f) {
+#if _PY_SHORT_FLOAT_REPR == 0
         if (f == 0) {
             /* Infinity */
             return sign ? -Py_HUGE_VAL : Py_HUGE_VAL;
         }
         else {
             /* NaN */
-            return sign ? -fabs(Py_NAN) : fabs(Py_NAN);
+            return sign ? -Py_NAN : Py_NAN;
         }
+#else  // _PY_SHORT_FLOAT_REPR == 1
+        if (f == 0) {
+            /* Infinity */
+            return _Py_dg_infinity(sign);
+        }
+        else {
+            /* NaN */
+            return _Py_dg_stdnan(sign);
+        }
+#endif  // _PY_SHORT_FLOAT_REPR == 1
     }
 
     x = (double)f / 1024.0;

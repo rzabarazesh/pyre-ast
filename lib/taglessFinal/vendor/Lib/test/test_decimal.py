@@ -20,7 +20,7 @@ Cowlishaw's tests can be downloaded from:
 
 This test module can be called from command line with one parameter (Arithmetic
 or Behaviour) to test each part, or without parameter to test both parts. If
-you're working through IDLE, you can import this test module and call test()
+you're working through IDLE, you can import this test module and call test_main()
 with the corresponding argument.
 """
 
@@ -32,12 +32,12 @@ import pickle, copy
 import unittest
 import numbers
 import locale
-from test.support import (is_resource_enabled,
+from test.support import (run_unittest, run_doctest, is_resource_enabled,
                           requires_IEEE_754, requires_docstrings,
                           requires_legacy_unicode_capi, check_sanitizer)
 from test.support import (TestFailed,
                           run_with_locale, cpython_only,
-                          darwin_malloc_err_warning, is_emscripten)
+                          darwin_malloc_err_warning)
 from test.support.import_helper import import_fresh_module
 from test.support import threading_helper
 from test.support import warnings_helper
@@ -62,7 +62,6 @@ sys.modules['decimal'] = C
 fractions = {C:cfractions, P:pfractions}
 sys.modules['decimal'] = orig_sys_decimal
 
-requires_cdecimal = unittest.skipUnless(C, "test requires C version")
 
 # Useful Test Constant
 Signals = {
@@ -100,7 +99,7 @@ RoundingModes = [
 ]
 
 # Tests are built around these assumed context defaults.
-# test() restores the original context.
+# test_main() restores the original context.
 ORIGINAL_CONTEXT = {
   C: C.getcontext().copy() if C else None,
   P: P.getcontext().copy()
@@ -134,7 +133,7 @@ skip_if_extra_functionality = unittest.skipIf(
   EXTRA_FUNCTIONALITY, "test requires regular build")
 
 
-class IBMTestCases:
+class IBMTestCases(unittest.TestCase):
     """Class which tests the Decimal class against the IBM test cases."""
 
     def setUp(self):
@@ -489,10 +488,14 @@ class IBMTestCases:
     def change_clamp(self, clamp):
         self.context.clamp = clamp
 
+class CIBMTestCases(IBMTestCases):
+    decimal = C
+class PyIBMTestCases(IBMTestCases):
+    decimal = P
 
 # The following classes test the behaviour of Decimal according to PEP 327
 
-class ExplicitConstructionTest:
+class ExplicitConstructionTest(unittest.TestCase):
     '''Unit tests for Explicit Construction cases of Decimal.'''
 
     def test_explicit_empty(self):
@@ -587,7 +590,7 @@ class ExplicitConstructionTest:
             self.assertRaises(InvalidOperation, Decimal, "1_2_\u00003")
 
     @cpython_only
-    @requires_legacy_unicode_capi()
+    @requires_legacy_unicode_capi
     @warnings_helper.ignore_warnings(category=DeprecationWarning)
     def test_from_legacy_strings(self):
         import _testcapi
@@ -835,13 +838,12 @@ class ExplicitConstructionTest:
         for input, expected in test_values.items():
             self.assertEqual(str(Decimal(input)), expected)
 
-@requires_cdecimal
-class CExplicitConstructionTest(ExplicitConstructionTest, unittest.TestCase):
+class CExplicitConstructionTest(ExplicitConstructionTest):
     decimal = C
-class PyExplicitConstructionTest(ExplicitConstructionTest, unittest.TestCase):
+class PyExplicitConstructionTest(ExplicitConstructionTest):
     decimal = P
 
-class ImplicitConstructionTest:
+class ImplicitConstructionTest(unittest.TestCase):
     '''Unit tests for Implicit Construction cases of Decimal.'''
 
     def test_implicit_from_None(self):
@@ -918,13 +920,12 @@ class ImplicitConstructionTest:
             self.assertEqual(eval('Decimal(10)' + sym + 'E()'),
                              '10' + rop + 'str')
 
-@requires_cdecimal
-class CImplicitConstructionTest(ImplicitConstructionTest, unittest.TestCase):
+class CImplicitConstructionTest(ImplicitConstructionTest):
     decimal = C
-class PyImplicitConstructionTest(ImplicitConstructionTest, unittest.TestCase):
+class PyImplicitConstructionTest(ImplicitConstructionTest):
     decimal = P
 
-class FormatTest:
+class FormatTest(unittest.TestCase):
     '''Unit tests for the format function.'''
     def test_formatting(self):
         Decimal = self.decimal.Decimal
@@ -1261,13 +1262,12 @@ class FormatTest:
         a = A.from_float(42)
         self.assertEqual(self.decimal.Decimal, a.a_type)
 
-@requires_cdecimal
-class CFormatTest(FormatTest, unittest.TestCase):
+class CFormatTest(FormatTest):
     decimal = C
-class PyFormatTest(FormatTest, unittest.TestCase):
+class PyFormatTest(FormatTest):
     decimal = P
 
-class ArithmeticOperatorsTest:
+class ArithmeticOperatorsTest(unittest.TestCase):
     '''Unit tests for all arithmetic operators, binary and unary.'''
 
     def test_addition(self):
@@ -1523,17 +1523,14 @@ class ArithmeticOperatorsTest:
         equality_ops = operator.eq, operator.ne
 
         # results when InvalidOperation is not trapped
-        with localcontext() as ctx:
-            ctx.traps[InvalidOperation] = 0
-
-            for x, y in qnan_pairs + snan_pairs:
-                for op in order_ops + equality_ops:
-                    got = op(x, y)
-                    expected = True if op is operator.ne else False
-                    self.assertIs(expected, got,
-                                "expected {0!r} for operator.{1}({2!r}, {3!r}); "
-                                "got {4!r}".format(
-                            expected, op.__name__, x, y, got))
+        for x, y in qnan_pairs + snan_pairs:
+            for op in order_ops + equality_ops:
+                got = op(x, y)
+                expected = True if op is operator.ne else False
+                self.assertIs(expected, got,
+                              "expected {0!r} for operator.{1}({2!r}, {3!r}); "
+                              "got {4!r}".format(
+                        expected, op.__name__, x, y, got))
 
         # repeat the above, but this time trap the InvalidOperation
         with localcontext() as ctx:
@@ -1565,10 +1562,9 @@ class ArithmeticOperatorsTest:
         self.assertEqual(Decimal(1).copy_sign(-2), d)
         self.assertRaises(TypeError, Decimal(1).copy_sign, '-2')
 
-@requires_cdecimal
-class CArithmeticOperatorsTest(ArithmeticOperatorsTest, unittest.TestCase):
+class CArithmeticOperatorsTest(ArithmeticOperatorsTest):
     decimal = C
-class PyArithmeticOperatorsTest(ArithmeticOperatorsTest, unittest.TestCase):
+class PyArithmeticOperatorsTest(ArithmeticOperatorsTest):
     decimal = P
 
 # The following are two functions used to test threading in the next class
@@ -1658,7 +1654,7 @@ def thfunc2(cls):
 
 
 @threading_helper.requires_working_threading()
-class ThreadingTest:
+class ThreadingTest(unittest.TestCase):
     '''Unit tests for thread local contexts in Decimal.'''
 
     # Take care executing this test from IDLE, there's an issue in threading
@@ -1703,14 +1699,13 @@ class ThreadingTest:
         DefaultContext.Emin = save_emin
 
 
-@requires_cdecimal
-class CThreadingTest(ThreadingTest, unittest.TestCase):
+class CThreadingTest(ThreadingTest):
     decimal = C
 
-class PyThreadingTest(ThreadingTest, unittest.TestCase):
+class PyThreadingTest(ThreadingTest):
     decimal = P
 
-class UsabilityTest:
+class UsabilityTest(unittest.TestCase):
     '''Unit tests for Usability cases of Decimal.'''
 
     def test_comparison_operators(self):
@@ -2526,10 +2521,9 @@ class UsabilityTest:
         self.assertEqual(Decimal(-12).fma(45, Decimal(67)),
                          Decimal(-12).fma(Decimal(45), Decimal(67)))
 
-@requires_cdecimal
-class CUsabilityTest(UsabilityTest, unittest.TestCase):
+class CUsabilityTest(UsabilityTest):
     decimal = C
-class PyUsabilityTest(UsabilityTest, unittest.TestCase):
+class PyUsabilityTest(UsabilityTest):
     decimal = P
 
     def setUp(self):
@@ -2541,7 +2535,7 @@ class PyUsabilityTest(UsabilityTest, unittest.TestCase):
         sys.set_int_max_str_digits(self._previous_int_limit)
         super().tearDown()
 
-class PythonAPItests:
+class PythonAPItests(unittest.TestCase):
 
     def test_abc(self):
         Decimal = self.decimal.Decimal
@@ -2890,13 +2884,12 @@ class PythonAPItests:
         self.assertTrue(issubclass(decimal.DivisionUndefined, ZeroDivisionError))
         self.assertTrue(issubclass(decimal.InvalidContext, InvalidOperation))
 
-@requires_cdecimal
-class CPythonAPItests(PythonAPItests, unittest.TestCase):
+class CPythonAPItests(PythonAPItests):
     decimal = C
-class PyPythonAPItests(PythonAPItests, unittest.TestCase):
+class PyPythonAPItests(PythonAPItests):
     decimal = P
 
-class ContextAPItests:
+class ContextAPItests(unittest.TestCase):
 
     def test_none_args(self):
         Context = self.decimal.Context
@@ -2919,7 +2912,7 @@ class ContextAPItests:
                                               Overflow])
 
     @cpython_only
-    @requires_legacy_unicode_capi()
+    @requires_legacy_unicode_capi
     @warnings_helper.ignore_warnings(category=DeprecationWarning)
     def test_from_legacy_strings(self):
         import _testcapi
@@ -3642,13 +3635,12 @@ class ContextAPItests:
         self.assertRaises(TypeError, c.to_integral_value, '10')
         self.assertRaises(TypeError, c.to_integral_value, 10, 'x')
 
-@requires_cdecimal
-class CContextAPItests(ContextAPItests, unittest.TestCase):
+class CContextAPItests(ContextAPItests):
     decimal = C
-class PyContextAPItests(ContextAPItests, unittest.TestCase):
+class PyContextAPItests(ContextAPItests):
     decimal = P
 
-class ContextWithStatement:
+class ContextWithStatement(unittest.TestCase):
     # Can't do these as docstrings until Python 2.6
     # as doctest can't handle __future__ statements
 
@@ -3712,13 +3704,9 @@ class ContextWithStatement:
 
     def test_local_context_kwargs_does_not_overwrite_existing_argument(self):
         ctx = self.decimal.getcontext()
-        orig_prec = ctx.prec
+        ctx.prec = 28
         with self.decimal.localcontext(prec=10) as ctx2:
-            self.assertEqual(ctx2.prec, 10)
-            self.assertEqual(ctx.prec, orig_prec)
-        with self.decimal.localcontext(prec=20) as ctx2:
-            self.assertEqual(ctx2.prec, 20)
-            self.assertEqual(ctx.prec, orig_prec)
+            self.assertEqual(ctx.prec, 28)
 
     def test_nested_with_statements(self):
         # Use a copy of the supplied context in the block
@@ -3812,13 +3800,12 @@ class ContextWithStatement:
                         self.assertEqual(c4.prec, 4)
                         del c4
 
-@requires_cdecimal
-class CContextWithStatement(ContextWithStatement, unittest.TestCase):
+class CContextWithStatement(ContextWithStatement):
     decimal = C
-class PyContextWithStatement(ContextWithStatement, unittest.TestCase):
+class PyContextWithStatement(ContextWithStatement):
     decimal = P
 
-class ContextFlags:
+class ContextFlags(unittest.TestCase):
 
     def test_flags_irrelevant(self):
         # check that the result (numeric result + flags raised) of an
@@ -4085,13 +4072,12 @@ class ContextFlags:
         self.assertTrue(context.traps[FloatOperation])
         self.assertTrue(context.traps[Inexact])
 
-@requires_cdecimal
-class CContextFlags(ContextFlags, unittest.TestCase):
+class CContextFlags(ContextFlags):
     decimal = C
-class PyContextFlags(ContextFlags, unittest.TestCase):
+class PyContextFlags(ContextFlags):
     decimal = P
 
-class SpecialContexts:
+class SpecialContexts(unittest.TestCase):
     """Test the context templates."""
 
     def test_context_templates(self):
@@ -4171,13 +4157,12 @@ class SpecialContexts:
             if ex:
                 raise ex
 
-@requires_cdecimal
-class CSpecialContexts(SpecialContexts, unittest.TestCase):
+class CSpecialContexts(SpecialContexts):
     decimal = C
-class PySpecialContexts(SpecialContexts, unittest.TestCase):
+class PySpecialContexts(SpecialContexts):
     decimal = P
 
-class ContextInputValidation:
+class ContextInputValidation(unittest.TestCase):
 
     def test_invalid_context(self):
         Context = self.decimal.Context
@@ -4239,13 +4224,12 @@ class ContextInputValidation:
         self.assertRaises(TypeError, Context, flags=(0,1))
         self.assertRaises(TypeError, Context, traps=(1,0))
 
-@requires_cdecimal
-class CContextInputValidation(ContextInputValidation, unittest.TestCase):
+class CContextInputValidation(ContextInputValidation):
     decimal = C
-class PyContextInputValidation(ContextInputValidation, unittest.TestCase):
+class PyContextInputValidation(ContextInputValidation):
     decimal = P
 
-class ContextSubclassing:
+class ContextSubclassing(unittest.TestCase):
 
     def test_context_subclassing(self):
         decimal = self.decimal
@@ -4354,14 +4338,12 @@ class ContextSubclassing:
         for signal in OrderedSignals[decimal]:
             self.assertFalse(c.traps[signal])
 
-@requires_cdecimal
-class CContextSubclassing(ContextSubclassing, unittest.TestCase):
+class CContextSubclassing(ContextSubclassing):
     decimal = C
-class PyContextSubclassing(ContextSubclassing, unittest.TestCase):
+class PyContextSubclassing(ContextSubclassing):
     decimal = P
 
 @skip_if_extra_functionality
-@requires_cdecimal
 class CheckAttributes(unittest.TestCase):
 
     def test_module_attributes(self):
@@ -4391,7 +4373,7 @@ class CheckAttributes(unittest.TestCase):
         y = [s for s in dir(C.Decimal(9)) if '__' in s or not s.startswith('_')]
         self.assertEqual(set(x) - set(y), set())
 
-class Coverage:
+class Coverage(unittest.TestCase):
 
     def test_adjusted(self):
         Decimal = self.decimal.Decimal
@@ -4648,10 +4630,9 @@ class Coverage:
         y = c.copy_sign(x, 1)
         self.assertEqual(y, -x)
 
-@requires_cdecimal
-class CCoverage(Coverage, unittest.TestCase):
+class CCoverage(Coverage):
     decimal = C
-class PyCoverage(Coverage, unittest.TestCase):
+class PyCoverage(Coverage):
     decimal = P
 
     def setUp(self):
@@ -4904,7 +4885,6 @@ class CFunctionality(unittest.TestCase):
         self.assertEqual(C.DecTraps,
                          C.DecErrors|C.DecOverflow|C.DecUnderflow)
 
-@requires_cdecimal
 class CWhitebox(unittest.TestCase):
     """Whitebox testing for _decimal"""
 
@@ -5643,7 +5623,6 @@ class CWhitebox(unittest.TestCase):
     # Issue 41540:
     @unittest.skipIf(sys.platform.startswith("aix"),
                      "AIX: default ulimit: test is flaky because of extreme over-allocation")
-    @unittest.skipIf(is_emscripten, "Test is unstable on Emscripten")
     @unittest.skipIf(check_sanitizer(address=True, memory=True),
                      "ASAN/MSAN sanitizer defaults to crashing "
                      "instead of returning NULL for malloc failure.")
@@ -5682,38 +5661,8 @@ class CWhitebox(unittest.TestCase):
             self.assertEqual(Decimal(400) ** -1, Decimal('0.0025'))
 
 
-    def test_c_signaldict_segfault(self):
-        # See gh-106263 for details.
-        SignalDict = type(C.Context().flags)
-        sd = SignalDict()
-        err_msg = "invalid signal dict"
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            len(sd)
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            iter(sd)
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            repr(sd)
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            sd[C.InvalidOperation] = True
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            sd[C.InvalidOperation]
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            sd == C.Context().flags
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            C.Context().flags == sd
-
-        with self.assertRaisesRegex(ValueError, err_msg):
-            sd.copy()
-
 @requires_docstrings
-@requires_cdecimal
+@unittest.skipUnless(C, "test requires C version")
 class SignatureTest(unittest.TestCase):
     """Function signatures"""
 
@@ -5849,10 +5798,52 @@ class SignatureTest(unittest.TestCase):
         doit('Context')
 
 
-def load_tests(loader, tests, pattern):
-    if TODO_TESTS is not None:
-        # Run only Arithmetic tests
-        tests = loader.suiteClass()
+all_tests = [
+  CExplicitConstructionTest, PyExplicitConstructionTest,
+  CImplicitConstructionTest, PyImplicitConstructionTest,
+  CFormatTest,               PyFormatTest,
+  CArithmeticOperatorsTest,  PyArithmeticOperatorsTest,
+  CThreadingTest,            PyThreadingTest,
+  CUsabilityTest,            PyUsabilityTest,
+  CPythonAPItests,           PyPythonAPItests,
+  CContextAPItests,          PyContextAPItests,
+  CContextWithStatement,     PyContextWithStatement,
+  CContextFlags,             PyContextFlags,
+  CSpecialContexts,          PySpecialContexts,
+  CContextInputValidation,   PyContextInputValidation,
+  CContextSubclassing,       PyContextSubclassing,
+  CCoverage,                 PyCoverage,
+  CFunctionality,            PyFunctionality,
+  CWhitebox,                 PyWhitebox,
+  CIBMTestCases,             PyIBMTestCases,
+]
+
+# Delete C tests if _decimal.so is not present.
+if not C:
+    all_tests = all_tests[1::2]
+else:
+    all_tests.insert(0, CheckAttributes)
+    all_tests.insert(1, SignatureTest)
+
+
+def test_main(arith=None, verbose=None, todo_tests=None, debug=None):
+    """ Execute the tests.
+
+    Runs all arithmetic tests if arith is True or if the "decimal" resource
+    is enabled in regrtest.py
+    """
+
+    init(C)
+    init(P)
+    global TEST_ALL, DEBUG
+    TEST_ALL = arith if arith is not None else is_resource_enabled('decimal')
+    DEBUG = debug
+
+    if todo_tests is None:
+        test_classes = all_tests
+    else:
+        test_classes = [CIBMTestCases, PyIBMTestCases]
+
     # Dynamically build custom test definition for each file in the test
     # directory and add the definitions to the DecimalTest class.  This
     # procedure insures that new files do not get skipped.
@@ -5860,69 +5851,34 @@ def load_tests(loader, tests, pattern):
         if '.decTest' not in filename or filename.startswith("."):
             continue
         head, tail = filename.split('.')
-        if TODO_TESTS is not None and head not in TODO_TESTS:
+        if todo_tests is not None and head not in todo_tests:
             continue
         tester = lambda self, f=filename: self.eval_file(directory + f)
-        setattr(IBMTestCases, 'test_' + head, tester)
+        setattr(CIBMTestCases, 'test_' + head, tester)
+        setattr(PyIBMTestCases, 'test_' + head, tester)
         del filename, head, tail, tester
-    for prefix, mod in ('C', C), ('Py', P):
-        if not mod:
-            continue
-        test_class = type(prefix + 'IBMTestCases',
-                          (IBMTestCases, unittest.TestCase),
-                          {'decimal': mod})
-        tests.addTest(loader.loadTestsFromTestCase(test_class))
-
-    if TODO_TESTS is None:
-        from doctest import DocTestSuite, IGNORE_EXCEPTION_DETAIL
-        for mod in C, P:
-            if not mod:
-                continue
-            def setUp(slf, mod=mod):
-                sys.modules['decimal'] = mod
-            def tearDown(slf):
-                sys.modules['decimal'] = orig_sys_decimal
-            optionflags = IGNORE_EXCEPTION_DETAIL if mod is C else 0
-            sys.modules['decimal'] = mod
-            tests.addTest(DocTestSuite(mod, setUp=setUp, tearDown=tearDown,
-                                   optionflags=optionflags))
-            sys.modules['decimal'] = orig_sys_decimal
-    return tests
-
-def setUpModule():
-    init(C)
-    init(P)
-    global TEST_ALL
-    TEST_ALL = ARITH if ARITH is not None else is_resource_enabled('decimal')
-
-def tearDownModule():
-    if C: C.setcontext(ORIGINAL_CONTEXT[C])
-    P.setcontext(ORIGINAL_CONTEXT[P])
-    if not C:
-        warnings.warn('C tests skipped: no module named _decimal.',
-                      UserWarning)
-    if not orig_sys_decimal is sys.modules['decimal']:
-        raise TestFailed("Internal error: unbalanced number of changes to "
-                         "sys.modules['decimal'].")
 
 
-ARITH = None
-TEST_ALL = True
-TODO_TESTS = None
-DEBUG = False
-
-def test(arith=None, verbose=None, todo_tests=None, debug=None):
-    """ Execute the tests.
-
-    Runs all arithmetic tests if arith is True or if the "decimal" resource
-    is enabled in regrtest.py
-    """
-
-    global ARITH, TODO_TESTS, DEBUG
-    ARITH = arith
-    TODO_TESTS = todo_tests
-    DEBUG = debug
-    unittest.main(__name__, verbosity=2 if verbose else 1, exit=False, argv=[__name__])
+    try:
+        run_unittest(*test_classes)
+        if todo_tests is None:
+            from doctest import IGNORE_EXCEPTION_DETAIL
+            savedecimal = sys.modules['decimal']
+            if C:
+                sys.modules['decimal'] = C
+                run_doctest(C, verbose, optionflags=IGNORE_EXCEPTION_DETAIL)
+            sys.modules['decimal'] = P
+            run_doctest(P, verbose)
+            sys.modules['decimal'] = savedecimal
+    finally:
+        if C: C.setcontext(ORIGINAL_CONTEXT[C])
+        P.setcontext(ORIGINAL_CONTEXT[P])
+        if not C:
+            warnings.warn('C tests skipped: no module named _decimal.',
+                          UserWarning)
+        if not orig_sys_decimal is sys.modules['decimal']:
+            raise TestFailed("Internal error: unbalanced number of changes to "
+                             "sys.modules['decimal'].")
 
 
 if __name__ == '__main__':
@@ -5933,8 +5889,8 @@ if __name__ == '__main__':
     (opt, args) = p.parse_args()
 
     if opt.skip:
-        test(arith=False, verbose=True)
+        test_main(arith=False, verbose=True)
     elif args:
-        test(arith=True, verbose=True, todo_tests=args, debug=opt.debug)
+        test_main(arith=True, verbose=True, todo_tests=args, debug=opt.debug)
     else:
-        test(arith=True, verbose=True)
+        test_main(arith=True, verbose=True)

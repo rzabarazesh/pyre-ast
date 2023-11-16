@@ -24,8 +24,7 @@ from collections import namedtuple
 from urllib.request import urlopen, urlcleanup
 from test.support import import_helper
 from test.support import os_helper
-from test.support.script_helper import (assert_python_ok,
-                                        assert_python_failure, spawn_python)
+from test.support.script_helper import assert_python_ok, assert_python_failure
 from test.support import threading_helper
 from test.support import (reap_children, captured_output, captured_stdout,
                           captured_stderr, is_emscripten, is_wasi,
@@ -55,58 +54,58 @@ CLASSES
         A
         B
         C
-
+\x20\x20\x20\x20
     class A(builtins.object)
      |  Hello and goodbye
-     |
+     |\x20\x20
      |  Methods defined here:
-     |
+     |\x20\x20
      |  __init__()
      |      Wow, I have no function!
-     |
+     |\x20\x20
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
-     |
+     |\x20\x20
      |  __dict__%s
-     |
+     |\x20\x20
      |  __weakref__%s
-
+\x20\x20\x20\x20
     class B(builtins.object)
      |  Data descriptors defined here:
-     |
+     |\x20\x20
      |  __dict__%s
-     |
+     |\x20\x20
      |  __weakref__%s
-     |
+     |\x20\x20
      |  ----------------------------------------------------------------------
      |  Data and other attributes defined here:
-     |
+     |\x20\x20
      |  NO_MEANING = 'eggs'
-     |
+     |\x20\x20
      |  __annotations__ = {'NO_MEANING': <class 'str'>}
-
+\x20\x20\x20\x20
     class C(builtins.object)
      |  Methods defined here:
-     |
+     |\x20\x20
      |  get_answer(self)
      |      Return say_no()
-     |
+     |\x20\x20
      |  is_it_true(self)
      |      Return self.get_answer()
-     |
+     |\x20\x20
      |  say_no(self)
-     |
+     |\x20\x20
      |  ----------------------------------------------------------------------
      |  Class methods defined here:
-     |
+     |\x20\x20
      |  __class_getitem__(item) from builtins.type
-     |
+     |\x20\x20
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
-     |
+     |\x20\x20
      |  __dict__
      |      dictionary for instance variables (if defined)
-     |
+     |\x20\x20
      |  __weakref__
      |      list of weak references to the object (if defined)
 
@@ -116,7 +115,7 @@ FUNCTIONS
         hunger
         lack of Python
         war
-
+\x20\x20\x20\x20
     nodoc_func()
 
 DATA
@@ -236,16 +235,16 @@ Help on class DA in module %s:
 
 class DA(builtins.object)
  |  Data descriptors defined here:
- |
+ |\x20\x20
  |  __dict__%s
- |
+ |\x20\x20
  |  __weakref__%s
- |
+ |\x20\x20
  |  ham
- |
+ |\x20\x20
  |  ----------------------------------------------------------------------
  |  Data and other attributes inherited from Meta:
- |
+ |\x20\x20
  |  ham = 'spam'
 """.strip()
 
@@ -254,7 +253,7 @@ Help on class Class in module %s:
 
 class Class(builtins.object)
  |  Data and other attributes inherited from Meta:
- |
+ |\x20\x20
  |  LIFE = 42
 """.strip()
 
@@ -263,7 +262,7 @@ Help on class Class1 in module %s:
 
 class Class1(builtins.object)
  |  Data and other attributes inherited from Meta1:
- |
+ |\x20\x20
  |  one = 1
 """.strip()
 
@@ -275,19 +274,19 @@ class Class2(Class1)
  |      Class2
  |      Class1
  |      builtins.object
- |
+ |\x20\x20
  |  Data and other attributes inherited from Meta1:
- |
+ |\x20\x20
  |  one = 1
- |
+ |\x20\x20
  |  ----------------------------------------------------------------------
  |  Data and other attributes inherited from Meta3:
- |
+ |\x20\x20
  |  three = 3
- |
+ |\x20\x20
  |  ----------------------------------------------------------------------
  |  Data and other attributes inherited from Meta2:
- |
+ |\x20\x20
  |  two = 2
 """.strip()
 
@@ -296,7 +295,7 @@ Help on class C in module %s:
 
 class C(builtins.object)
  |  Data and other attributes defined here:
- |
+ |\x20\x20
  |  here = 'present!'
 """.strip()
 
@@ -632,21 +631,6 @@ class PydocDocTest(unittest.TestCase):
         # Testing that the subclasses section does not appear
         self.assertNotIn('Built-in subclasses', text)
 
-    def test_fail_help_cli(self):
-        elines = (missing_pattern % 'abd').splitlines()
-        with spawn_python("-c" "help()") as proc:
-            out, _ = proc.communicate(b"abd")
-            olines = out.decode().splitlines()[-9:-6]
-            olines[0] = olines[0].removeprefix('help> ')
-            self.assertEqual(elines, olines)
-
-    def test_fail_help_output_redirect(self):
-        with StringIO() as buf:
-            helper = pydoc.Helper(output=buf)
-            helper.help("abd")
-            expected = missing_pattern % "abd"
-            self.assertEqual(expected, buf.getvalue().strip().replace('\n', os.linesep))
-
     @unittest.skipIf(hasattr(sys, 'gettrace') and sys.gettrace(),
                      'trace function introduces __locals__ unexpectedly')
     @requires_docstrings
@@ -718,7 +702,7 @@ class PydocDocTest(unittest.TestCase):
     def test_synopsis_sourceless(self):
         os = import_helper.import_fresh_module('os')
         expected = os.__doc__.splitlines()[0]
-        filename = os.__spec__.cached
+        filename = os.__cached__
         synopsis = pydoc.synopsis(filename)
 
         self.assertEqual(synopsis, expected)
@@ -801,33 +785,33 @@ class B(A)
  |      B
  |      A
  |      builtins.object
- |
+ |\x20\x20
  |  Methods defined here:
- |
+ |\x20\x20
  |  b_size = a_size(self)
- |
+ |\x20\x20
  |  itemconfig = itemconfigure(self, tagOrId, cnf=None, **kw)
- |
+ |\x20\x20
  |  itemconfigure(self, tagOrId, cnf=None, **kw)
  |      Configure resources of an item TAGORID.
- |
+ |\x20\x20
  |  ----------------------------------------------------------------------
  |  Methods inherited from A:
- |
+ |\x20\x20
  |  a_size(self)
  |      Return size
- |
+ |\x20\x20
  |  lift = tkraise(self, aboveThis=None)
- |
+ |\x20\x20
  |  tkraise(self, aboveThis=None)
  |      Raise this widget in the stacking order.
- |
+ |\x20\x20
  |  ----------------------------------------------------------------------
  |  Data descriptors inherited from A:
- |
+ |\x20\x20
  |  __dict__
  |      dictionary for instance variables (if defined)
- |
+ |\x20\x20
  |  __weakref__
  |      list of weak references to the object (if defined)
 ''' % __name__)
@@ -1196,7 +1180,7 @@ sm(x, y)
 """)
         self.assertIn("""
  |  Static methods defined here:
- |
+ |\x20\x20
  |  sm(x, y)
  |      A static method
 """, pydoc.plain(pydoc.render_doc(X)))
@@ -1217,7 +1201,7 @@ cm(x) method of builtins.type instance
 """)
         self.assertIn("""
  |  Class methods defined here:
- |
+ |\x20\x20
  |  cm(x) from builtins.type
  |      A class method
 """, pydoc.plain(pydoc.render_doc(X)))
