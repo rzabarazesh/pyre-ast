@@ -24,6 +24,7 @@ depends: [
   "odoc" {with-doc}
 ]
 build: [
+  ["python3" "lib/taglessFinal/pre-build.py"]
   ["dune" "subst"] {dev}
   [
     "dune"
