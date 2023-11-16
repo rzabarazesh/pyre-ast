@@ -145,10 +145,10 @@ exec_prefix=	${prefix}
 datarootdir=    ${prefix}/share
 
 # Locations needed for semi-native fixup of sysconfig.
-srcdir_b2h=		C:/pyre-ast/lib/taglessFinal/vendor-mingw
-abs_srcdir_b2h=		C:/pyre-ast/lib/taglessFinal/vendor-mingw
-abs_builddir_b2h=	C:/pyre-ast/lib/taglessFinal/vendor-mingw
-prefix_b2h=		C:/msys64__/mingw64
+srcdir_b2h=		${CURDIR}
+abs_srcdir_b2h=		${CURDIR}
+abs_builddir_b2h=	${CURDIR}
+prefix_b2h=		C:/msys64/mingw64
 
 # Expanded directories
 BINDIR=		${exec_prefix}/bin
