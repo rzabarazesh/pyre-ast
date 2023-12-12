@@ -11,8 +11,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 script_dir = pathlib.Path(__file__).parent.absolute()
 
 # Check the system
-is_windows = 'CYGWIN' in platform.system()
+is_windows = 'CYGWIN' in platform.system() or 'Windows' in platform.system()
+import os
+home_dir = os.path.expanduser('~')
 
+with open(os.path.join(home_dir, 'test'), 'w') as f:
+    f.write(platform.system())
 configure_cmd = "" if is_windows else "(run ./configure)"
 # Choose the vendor dir based on the system
 vendor_dir = 'vendor-mingw' if is_windows else 'vendor'
@@ -30,17 +34,16 @@ dune_content = f'''\
  (dirs :standard _*))
 
 (rule
- (deps
+ (deps 
   (source_tree {vendor_dir}))
  (targets libpython.a pyconfig.h)
  (action
   (no-infer
    (progn
-    (chdir
-     {vendor_dir}
+    (chdir {vendor_dir}
      (progn
        {configure_cmd}
-       (run make libpython3.11.a))
+       (run make libpython3.11.a)))
      (copy {vendor_dir}/libpython3.11.a libpython.a)
      (copy {vendor_dir}/pyconfig.h pyconfig.h)))))
 
