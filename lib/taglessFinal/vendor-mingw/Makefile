@@ -1107,27 +1107,6 @@ Modules/Setup.local:
 	@# Create empty Setup.local when file was deleted by user
 	echo "# Edit this file for local setup changes" > $@
 
-Modules/Setup.bootstrap: $(srcdir)/Modules/Setup.bootstrap.in config.status
-	./config.status $@
-
-Modules/Setup.stdlib: $(srcdir)/Modules/Setup.stdlib.in config.status
-	./config.status $@
-
-Makefile Modules/config.c: Makefile.pre \
-				$(srcdir)/Modules/config.c.in \
-				$(MAKESETUP) \
-				$(srcdir)/Modules/Setup \
-				Modules/Setup.local \
-				Modules/Setup.bootstrap \
-				Modules/Setup.stdlib
-	$(SHELL) $(MAKESETUP) -c $(srcdir)/Modules/config.c.in \
-				-s Modules \
-				Modules/Setup.local \
-				 \
-				Modules/Setup.bootstrap \
-				$(srcdir)/Modules/Setup
-	@mv config.c Modules
-	@echo "The Makefile was updated, you may need to re-run make."
 
 .PHONY: regen-test-frozenmain
 regen-test-frozenmain: $(BUILDPYTHON)
@@ -2441,9 +2420,6 @@ libainstall: all python-config
 	$(INSTALL_DATA) $(srcdir)/Modules/config.c.in $(DESTDIR)$(LIBPL)/config.c.in
 	$(INSTALL_DATA) Makefile $(DESTDIR)$(LIBPL)/Makefile
 	$(INSTALL_DATA) $(srcdir)/Modules/Setup $(DESTDIR)$(LIBPL)/Setup
-	$(INSTALL_DATA) Modules/Setup.bootstrap $(DESTDIR)$(LIBPL)/Setup.bootstrap
-	$(INSTALL_DATA) Modules/Setup.stdlib $(DESTDIR)$(LIBPL)/Setup.stdlib
-	$(INSTALL_DATA) Modules/Setup.local $(DESTDIR)$(LIBPL)/Setup.local
 	$(INSTALL_DATA) Misc/python.pc $(DESTDIR)$(LIBPC)/python-$(VERSION).pc
 	$(INSTALL_DATA) Misc/python-embed.pc $(DESTDIR)$(LIBPC)/python-$(VERSION)-embed.pc
 	$(INSTALL_SCRIPT) $(srcdir)/Modules/makesetup $(DESTDIR)$(LIBPL)/makesetup
@@ -2557,16 +2533,6 @@ frameworkaltinstallunixtools:
 frameworkinstallextras:
 	cd Mac && $(MAKE) installextras DESTDIR="$(DESTDIR)"
 
-# Build the toplevel Makefile
-Makefile.pre: $(srcdir)/Makefile.pre.in config.status
-	CONFIG_FILES=Makefile.pre CONFIG_HEADERS= $(SHELL) config.status
-	$(MAKE) -f Makefile.pre Makefile
-
-# Run the configure script.
-config.status:	$(srcdir)/configure
-	$(SHELL) $(srcdir)/configure $(CONFIG_ARGS)
-
-.PRECIOUS: config.status $(BUILDPYTHON) Makefile Makefile.pre
 
 # Some make's put the object file in the current directory
 .c.o:
@@ -2582,12 +2548,6 @@ Python/dtoa.o: Python/dtoa.c
 # Run reindent on the library
 reindent:
 	./$(BUILDPYTHON) $(srcdir)/Tools/scripts/reindent.py -r $(srcdir)/Lib
-
-# Rerun configure with the same options as it was run last time,
-# provided the config.status script exists
-recheck:
-	$(SHELL) config.status --recheck
-	$(SHELL) config.status
 
 # Regenerate configure and pyconfig.h.in
 .PHONY: autoconf
@@ -2689,7 +2649,7 @@ distclean: clobber docclean
 	for file in $(srcdir)/Lib/test/data/* ; do \
 	    if test "$$file" != "$(srcdir)/Lib/test/data/README"; then rm "$$file"; fi; \
 	done
-	-rm -f core Makefile Makefile.pre config.status Modules/Setup.local \
+	-rm -f core Makefile Makefile.pre  Modules/Setup.local \
 	    Modules/Setup.bootstrap Modules/Setup.stdlib \
 		Modules/ld_so_aix Modules/python.exp Misc/python.pc \
 		Misc/python-embed.pc Misc/python-config.sh
